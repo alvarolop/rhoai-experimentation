@@ -1,0 +1,16 @@
+{{- if and .Values.tekton.enabled .Values.tekton.triggers.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tekton-triggers-role
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "rhoai-pipelines-demo.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["tekton.dev"]
+    resources: ["pipelineruns", "pipelineresources", "taskruns"]
+    verbs: ["create", "get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list"]
+{{- end }}

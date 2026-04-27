@@ -1,0 +1,35 @@
+namespace: rhoai-pipelines-demo
+createNamespace: false
+
+dsp:
+  apiUrl: http://ds-pipeline-dspa.rhoai-pipelines-demo.svc.cluster.local:8888
+
+modelRegistry:
+  url: http://model-registry-service:8080
+
+s3:
+  endpoint: minio-service.rhoai-pipelines-demo.svc.cluster.local:9000
+  bucket: pipeline-artifacts
+  accessKeyId: ""
+  secretAccessKey: ""
+
+storage:
+  pvcSize: 10Gi
+  storageClassName: ""
+
+git:
+  url: https://github.com/alvarolop/rhoai-experimentation.git
+  revision: main
+  pipelinePath: pipelines/fraud-detection
+
+kfpPipeline:
+  name: fraud-detection-pipeline
+
+tekton:
+  enabled: true
+  serviceAccount: pipeline
+  image: quay.io/alopezme/rhoai-kfp-builder:latest
+  triggers:
+    enabled: true
+    exposeRoute: true
+    webhookSecret: ""  # Set via --set or use default

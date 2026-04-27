@@ -1,0 +1,13 @@
+apiVersion: v2
+name: rhoai-pipelines-demo
+description: A Helm chart for deploying RHOAI Data Science Pipelines with Tekton automation
+type: application
+version: 0.1.0
+appVersion: "1.0"
+keywords:
+  - openshift-ai
+  - kubeflow-pipelines
+  - tekton
+  - mlops
+maintainers:
+  - name: Alvaro Lopez Medina

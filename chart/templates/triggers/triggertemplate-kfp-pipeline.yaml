@@ -1,0 +1,47 @@
+{{- if and .Values.tekton.enabled .Values.tekton.triggers.enabled }}
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: kfp-pipeline-template
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "rhoai-pipelines-demo.labels" . | nindent 4 }}
+spec:
+  params:
+    - name: git-url
+      description: The git repository URL
+    - name: git-revision
+      description: The git revision
+      default: {{ .Values.git.revision }}
+    - name: git-repo-name
+      description: The name of the git repository
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        generateName: kfp-pipeline-run-
+        namespace: {{ .Values.namespace }}
+        labels:
+          tekton.dev/pipeline: deploy-kfp-pipeline
+          app.kubernetes.io/managed-by: triggers
+      spec:
+        pipelineRef:
+          name: deploy-kfp-pipeline
+        params:
+          - name: git-url
+            value: $(tt.params.git-url)
+          - name: git-revision
+            value: $(tt.params.git-revision)
+          - name: pipeline-path
+            value: {{ .Values.git.pipelinePath }}
+          - name: pipeline-name
+            value: {{ .Values.kfpPipeline.name }}
+          - name: dsp-api-url
+            value: {{ .Values.dsp.apiUrl }}
+          - name: namespace
+            value: {{ .Values.namespace }}
+        workspaces:
+          - name: shared-workspace
+            persistentVolumeClaim:
+              claimName: pipeline-workspace
+{{- end }}

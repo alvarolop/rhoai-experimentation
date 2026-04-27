@@ -1,0 +1,33 @@
+FROM python:3.11-slim
+
+LABEL maintainer="Alvaro Lopez Medina"
+LABEL description="Custom image for RHOAI Kubeflow Pipelines CI/CD with Tekton"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages
+RUN pip install --no-cache-dir \
+    kfp==2.8.0 \
+    scikit-learn==1.5.0 \
+    pandas==2.2.2 \
+    numpy==1.26.4 \
+    requests==2.32.3 \
+    pylint==3.1.0 \
+    flake8==7.0.0 \
+    black==24.3.0
+
+# Set working directory
+WORKDIR /workspace
+
+# Non-root user for security
+RUN useradd -m -u 1001 -s /bin/bash pipeline && \
+    chown -R pipeline:pipeline /workspace
+
+USER pipeline
+
+CMD ["/bin/bash"]

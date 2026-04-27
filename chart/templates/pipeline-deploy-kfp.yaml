@@ -1,0 +1,87 @@
+{{- if .Values.tekton.enabled }}
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: deploy-kfp-pipeline
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "rhoai-pipelines-demo.labels" . | nindent 4 }}
+spec:
+  params:
+    - name: git-url
+      type: string
+      default: {{ .Values.git.url }}
+    - name: git-revision
+      type: string
+      default: {{ .Values.git.revision }}
+    - name: pipeline-path
+      type: string
+      default: {{ .Values.git.pipelinePath }}
+    - name: pipeline-name
+      type: string
+      default: {{ .Values.kfpPipeline.name }}
+    - name: pipeline-file
+      type: string
+      default: "pipeline.py"
+    - name: dsp-api-url
+      type: string
+      default: {{ .Values.dsp.apiUrl }}
+    - name: namespace
+      type: string
+      default: {{ .Values.namespace }}
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: git-clone
+      taskRef:
+        name: git-clone
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: revision
+          value: $(params.git-revision)
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+
+    - name: lint
+      taskRef:
+        name: lint-kfp-pipeline
+      runAfter:
+        - git-clone
+      params:
+        - name: pipeline-file
+          value: $(params.pipeline-path)/$(params.pipeline-file)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: compile-upload
+      taskRef:
+        name: compile-upload-kfp
+      runAfter:
+        - lint
+      params:
+        - name: pipeline-file
+          value: $(params.pipeline-path)/$(params.pipeline-file)
+        - name: pipeline-name
+          value: $(params.pipeline-name)
+        - name: dsp-api-url
+          value: $(params.dsp-api-url)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: run
+      taskRef:
+        name: run-kfp-pipeline
+      runAfter:
+        - compile-upload
+      params:
+        - name: pipeline-id
+          value: $(tasks.compile-upload.results.pipeline-id)
+        - name: dsp-api-url
+          value: $(params.dsp-api-url)
+        - name: namespace
+          value: $(params.namespace)
+{{- end }}

@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+
+# Helm
+chart/
+
+# Documentation
+docs/
+README.md
+
+# CI/CD
+.github/
+
+# Temporary
+*.tmp
+*.log

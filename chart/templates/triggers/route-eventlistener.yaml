@@ -1,0 +1,19 @@
+{{- if and .Values.tekton.enabled .Values.tekton.triggers.enabled .Values.tekton.triggers.exposeRoute }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: kfp-webhook-listener
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "rhoai-pipelines-demo.labels" . | nindent 4 }}
+spec:
+  port:
+    targetPort: http-listener
+  to:
+    kind: Service
+    name: el-kfp-webhook
+    weight: 100
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+{{- end }}

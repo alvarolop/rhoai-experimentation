@@ -1,0 +1,17 @@
+{{- if and .Values.tekton.enabled .Values.tekton.triggers.enabled }}
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: kfp-webhook-binding
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "rhoai-pipelines-demo.labels" . | nindent 4 }}
+spec:
+  params:
+    - name: git-url
+      value: $(body.repository.clone_url)
+    - name: git-revision
+      value: $(body.after)
+    - name: git-repo-name
+      value: $(body.repository.name)
+{{- end }}

@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: fraud-detection-run-
+  namespace: rhoai-pipelines-demo
+spec:
+  pipelineRef:
+    name: deploy-kfp-pipeline
+  params:
+    - name: git-url
+      value: https://github.com/alvarolop/rhoai-experimentation.git
+    - name: git-revision
+      value: main
+    - name: pipeline-path
+      value: pipelines/fraud-detection
+    - name: pipeline-name
+      value: fraud-detection-pipeline
+    - name: pipeline-file
+      value: pipeline.py
+    - name: dsp-api-url
+      value: http://ds-pipeline-dspa.rhoai-pipelines-demo.svc.cluster.local:8888
+    - name: namespace
+      value: rhoai-pipelines-demo
+  workspaces:
+    - name: shared-workspace
+      persistentVolumeClaim:
+        claimName: pipeline-workspace
