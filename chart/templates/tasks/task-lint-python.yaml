@@ -17,8 +17,8 @@ spec:
     - name: source
   steps:
     - name: lint
-      # Use Red Hat UBI9 Python base image
-      image: registry.access.redhat.com/ubi9/python-312
+      # Use Red Hat UBI9 Python 3.11 for consistency with RHOAI
+      image: registry.access.redhat.com/ubi9/python-311
       workingDir: $(workspaces.source.path)/$(params.path)
       script: |
         #!/bin/bash

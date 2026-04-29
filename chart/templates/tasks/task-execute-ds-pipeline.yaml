@@ -39,8 +39,8 @@ spec:
       description: Pipeline execution status (succeeded/failed)
   steps:
     - name: execute-pipeline
-      # Use Red Hat UBI9 Python base image
-      image: registry.access.redhat.com/ubi9/python-312
+      # Use Red Hat UBI9 Python 3.11 (required for KFP <2.5.0)
+      image: registry.access.redhat.com/ubi9/python-311
       workingDir: $(workspaces.source.path)
       script: |
         #!/bin/bash
@@ -52,7 +52,7 @@ spec:
         cd ${PIPELINE_DIR}
 
         echo "🚀 Installing KFP dependencies..."
-        pip install --quiet --no-cache-dir kfp==2.14.0 kfp-kubernetes==1.3.0
+        pip install --quiet --no-cache-dir kfp==2.14.1 kfp-kubernetes==1.3.0
 
         echo "🚀 Executing Data Science Pipeline: $(params.pipeline-name)"
         echo "   Pipeline file: $(params.pipeline-file)"
