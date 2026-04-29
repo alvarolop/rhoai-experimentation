@@ -1,3 +1,4 @@
+---
 {{- if .Values.tekton.enabled }}
 apiVersion: tekton.dev/v1
 kind: Task
@@ -24,7 +25,7 @@ spec:
       description: The git repo will be cloned here
   steps:
     - name: clone
-      image: gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:latest
+      image: registry.redhat.io/openshift-pipelines/pipelines-git-init-rhel8:v1.15
       script: |
         #!/bin/sh
         set -e

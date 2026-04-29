@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 
 
 @component(
-    base_image="python:3.11-slim",
+    base_image="registry.access.redhat.com/ubi9/python-311",
     packages_to_install=["pandas==2.2.2", "scikit-learn==1.5.0"]
 )
 def train_fraud_model(

@@ -4,7 +4,7 @@ import numpy as np
 
 
 @component(
-    base_image="python:3.11-slim",
+    base_image="registry.access.redhat.com/ubi9/python-311",
     packages_to_install=["pandas==2.2.2", "numpy==1.26.4"]
 )
 def generate_fraud_data(

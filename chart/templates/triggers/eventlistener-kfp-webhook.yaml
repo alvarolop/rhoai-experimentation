@@ -1,3 +1,4 @@
+---
 {{- if and .Values.tekton.enabled .Values.tekton.triggers.enabled }}
 apiVersion: triggers.tekton.dev/v1beta1
 kind: EventListener

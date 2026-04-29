@@ -1,3 +1,4 @@
+---
 apiVersion: v2
 name: rhoai-pipelines-demo
 description: A Helm chart for deploying RHOAI Data Science Pipelines with Tekton automation
