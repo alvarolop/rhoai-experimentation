@@ -3,12 +3,10 @@ from kfp.dsl import component, Input, Artifact
 
 @component(
     base_image="registry.access.redhat.com/ubi9/python-312",
-    packages_to_install=["kubernetes==31.0.0"]
+    packages_to_install=["kubernetes==31.0.0"],
 )
 def configure_trustyai(
-    deployment_info_input: Input[Artifact],
-    namespace: str,
-    enable_metrics: bool = True
+    deployment_info_input: Input[Artifact], namespace: str, enable_metrics: bool = True
 ) -> str:
     """
     Configure TrustyAI monitoring for the deployed model.
@@ -22,10 +20,10 @@ def configure_trustyai(
     print("=" * 60)
 
     # Load deployment info
-    with open(deployment_info_input.path, 'r') as f:
+    with open(deployment_info_input.path, "r") as f:
         deployment_info = json.load(f)
 
-    isvc_name = deployment_info['inference_service_name']
+    isvc_name = deployment_info["inference_service_name"]
     print(f"\n✓ Model: {isvc_name}")
 
     if not enable_metrics:
@@ -47,7 +45,7 @@ def configure_trustyai(
                 version="v1alpha1",
                 namespace=namespace,
                 plural="trustyaiservices",
-                name=trustyai_name
+                name=trustyai_name,
             )
             print(f"  ✅ TrustyAIService already exists")
 
@@ -64,23 +62,14 @@ def configure_trustyai(
                         "namespace": namespace,
                         "labels": {
                             "app": "trustyai",
-                            "app.kubernetes.io/name": "trustyai-service"
-                        }
+                            "app.kubernetes.io/name": "trustyai-service",
+                        },
                     },
                     "spec": {
-                        "storage": {
-                            "format": "PVC",
-                            "folder": "/data",
-                            "size": "1Gi"
-                        },
-                        "data": {
-                            "filename": "data.csv",
-                            "format": "CSV"
-                        },
-                        "metrics": {
-                            "schedule": "5s"
-                        }
-                    }
+                        "storage": {"format": "PVC", "folder": "/data", "size": "1Gi"},
+                        "data": {"filename": "data.csv", "format": "CSV"},
+                        "metrics": {"schedule": "5s"},
+                    },
                 }
 
                 api.create_namespaced_custom_object(
@@ -88,7 +77,7 @@ def configure_trustyai(
                     version="v1alpha1",
                     namespace=namespace,
                     plural="trustyaiservices",
-                    body=trustyai_service
+                    body=trustyai_service,
                 )
                 print(f"  ✅ Created TrustyAIService")
             else:
@@ -107,31 +96,26 @@ def configure_trustyai(
                 "name": monitor_name,
                 "namespace": namespace,
                 "labels": {
-                    "model": deployment_info['model_name'],
-                    "version": deployment_info['model_version']
-                }
+                    "model": deployment_info["model_name"],
+                    "version": deployment_info["model_version"],
+                },
             },
             "spec": {
-                "inferenceService": {
-                    "name": isvc_name,
-                    "namespace": namespace
-                },
-                "storage": {
-                    "format": "PVC"
-                },
+                "inferenceService": {"name": isvc_name, "namespace": namespace},
+                "storage": {"format": "PVC"},
                 "metrics": [
                     {
                         "name": "SPD",  # Statistical Parity Difference
                         "enabled": True,
-                        "batchSize": 100
+                        "batchSize": 100,
                     },
                     {
                         "name": "DIR",  # Disparate Impact Ratio
                         "enabled": True,
-                        "batchSize": 100
-                    }
-                ]
-            }
+                        "batchSize": 100,
+                    },
+                ],
+            },
         }
 
         try:
@@ -141,7 +125,7 @@ def configure_trustyai(
                 version="v1alpha1",
                 namespace=namespace,
                 plural="inferenceservicemonitors",
-                body=monitor
+                body=monitor,
             )
             print(f"  ✅ Created InferenceServiceMonitor '{monitor_name}'")
 

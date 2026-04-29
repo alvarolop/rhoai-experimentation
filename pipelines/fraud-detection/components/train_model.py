@@ -3,14 +3,14 @@ from kfp.dsl import component, Input, Output, Dataset, Model, Metrics
 
 @component(
     base_image="registry.access.redhat.com/ubi9/python-312",
-    packages_to_install=["pandas==2.3.0", "scikit-learn==1.7.0", "numpy==2.3.0"]
+    packages_to_install=["pandas==2.3.0", "scikit-learn==1.7.0", "numpy==2.3.0"],
 )
 def train_fraud_model(
     input_data: Input[Dataset],
     model_output: Output[Model],
     metrics: Output[Metrics],
     test_size: float = 0.2,
-    n_estimators: int = 100
+    n_estimators: int = 100,
 ) -> str:
     """
     Train a fraud detection model using RandomForest.
@@ -31,11 +31,13 @@ def train_fraud_model(
     df = pd.read_csv(input_data.path)
     print(f"\n✓ Loaded dataset: {df.shape[0]} samples, {df.shape[1]} features")
 
-    X = df.drop('is_fraud', axis=1)
-    y = df['is_fraud']
+    X = df.drop("is_fraud", axis=1)
+    y = df["is_fraud"]
 
     print(f"  - Fraud samples: {y.sum()} ({y.sum()/len(y)*100:.2f}%)")
-    print(f"  - Legitimate samples: {(~y.astype(bool)).sum()} ({(~y.astype(bool)).sum()/len(y)*100:.2f}%)")
+    print(
+        f"  - Legitimate samples: {(~y.astype(bool)).sum()} ({(~y.astype(bool)).sum()/len(y)*100:.2f}%)"
+    )
 
     # Split data
     X_train, X_test, y_train, y_test = train_test_split(
@@ -49,7 +51,7 @@ def train_fraud_model(
         n_estimators=n_estimators,
         max_depth=10,
         random_state=42,
-        class_weight='balanced'
+        class_weight="balanced",
     )
     clf.fit(X_train, y_train)
 
@@ -73,7 +75,7 @@ def train_fraud_model(
     metrics.log_metric("f1_score", float(f1))
 
     # Save model
-    with open(model_output.path, 'wb') as f:
+    with open(model_output.path, "wb") as f:
         pickle.dump(clf, f)
     print(f"\n✓ Model saved to {model_output.path}")
 
@@ -86,7 +88,7 @@ def train_fraud_model(
         "accuracy": float(accuracy),
         "precision": float(precision),
         "recall": float(recall),
-        "f1_score": float(f1)
+        "f1_score": float(f1),
     }
 
     print("=" * 60)

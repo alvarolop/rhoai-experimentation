@@ -36,15 +36,30 @@ spec:
     - name: git-clone
       taskRef:
         {{- if .Values.tekton.useClusterTasks }}
-        # Use official Red Hat OpenShift Pipelines ClusterTask
-        kind: ClusterTask
-        {{- end }}
+        # Use Red Hat provided git-clone task from openshift-pipelines namespace
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
+        {{- else }}
         name: git-clone
+        {{- end }}
       params:
+        {{- if .Values.tekton.useClusterTasks }}
+        - name: URL
+          value: $(params.git-url)
+        - name: REVISION
+          value: $(params.git-revision)
+        {{- else }}
         - name: url
           value: $(params.git-url)
         - name: revision
           value: $(params.git-revision)
+        {{- end }}
       workspaces:
         - name: output
           workspace: shared-workspace

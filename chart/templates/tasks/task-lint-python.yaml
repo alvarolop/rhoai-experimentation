@@ -17,12 +17,15 @@ spec:
     - name: source
   steps:
     - name: lint
-      # Custom builder with linting tools pre-installed
-      image: {{ .Values.tekton.image }}
+      # Use Red Hat UBI9 Python base image
+      image: registry.access.redhat.com/ubi9/python-312
       workingDir: $(workspaces.source.path)/$(params.path)
       script: |
         #!/bin/bash
         set -e
+
+        echo "Installing linting tools..."
+        pip install --quiet --no-cache-dir black==24.10.0 flake8==7.1.1 pylint==3.3.1
 
         echo "Checking code formatting with Black..."
         black . --check --diff || BLACK_EXIT=$?

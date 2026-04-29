@@ -3,14 +3,14 @@ from kfp.dsl import component, Input, Output, Artifact
 
 @component(
     base_image="registry.access.redhat.com/ubi9/python-312",
-    packages_to_install=["kubernetes==31.0.0"]
+    packages_to_install=["kubernetes==31.0.0"],
 )
 def deploy_openvino(
     s3_info_input: Input[Artifact],
     model_name: str,
     model_version: str,
     namespace: str,
-    deployment_output: Output[Artifact]
+    deployment_output: Output[Artifact],
 ) -> str:
     """
     Deploy ONNX model to KServe with OpenVINO runtime.
@@ -24,16 +24,16 @@ def deploy_openvino(
     print("=" * 60)
 
     # Load S3 info
-    with open(s3_info_input.path, 'r') as f:
+    with open(s3_info_input.path, "r") as f:
         s3_info = json.load(f)
 
-    s3_uri = s3_info['s3_uri']
+    s3_uri = s3_info["s3_uri"]
     print(f"\n✓ Model location: {s3_uri}")
 
     # Generate InferenceService name (DNS-1123 compliant)
     isvc_name = f"{model_name}-{model_version}".replace("_", "-").lower()
     if len(isvc_name) > 63:
-        isvc_name = isvc_name[:63].rstrip('-')
+        isvc_name = isvc_name[:63].rstrip("-")
 
     print(f"✓ InferenceService name: {isvc_name}")
 
@@ -47,37 +47,28 @@ def deploy_openvino(
             "annotations": {
                 "serving.kserve.io/deploymentMode": "RawDeployment",
                 "openshift.io/display-name": f"Fraud Detection Model {model_version}",
-                "serving.kserve.io/enable-prometheus-scraping": "true"
+                "serving.kserve.io/enable-prometheus-scraping": "true",
             },
             "labels": {
                 "app": "fraud-detection",
                 "model": model_name,
                 "version": model_version,
-                "runtime": "openvino"
-            }
+                "runtime": "openvino",
+            },
         },
         "spec": {
             "predictor": {
                 "model": {
-                    "modelFormat": {
-                        "name": "onnx",
-                        "version": "1"
-                    },
+                    "modelFormat": {"name": "onnx", "version": "1"},
                     "runtime": "kserve-ovms",  # OpenVINO Model Server
                     "storageUri": s3_uri,
                     "resources": {
-                        "requests": {
-                            "cpu": "100m",
-                            "memory": "256Mi"
-                        },
-                        "limits": {
-                            "cpu": "1",
-                            "memory": "2Gi"
-                        }
-                    }
+                        "requests": {"cpu": "100m", "memory": "256Mi"},
+                        "limits": {"cpu": "1", "memory": "2Gi"},
+                    },
                 }
             }
-        }
+        },
     }
 
     print(f"\n✓ Creating InferenceService...")
@@ -96,7 +87,7 @@ def deploy_openvino(
                 version="v1beta1",
                 namespace=namespace,
                 plural="inferenceservices",
-                name=isvc_name
+                name=isvc_name,
             )
             print(f"  ✓ InferenceService '{isvc_name}' already exists, updating...")
 
@@ -107,7 +98,7 @@ def deploy_openvino(
                 namespace=namespace,
                 plural="inferenceservices",
                 name=isvc_name,
-                body=inference_service
+                body=inference_service,
             )
             print(f"  ✅ Updated InferenceService '{isvc_name}'")
 
@@ -119,7 +110,7 @@ def deploy_openvino(
                     version="v1beta1",
                     namespace=namespace,
                     plural="inferenceservices",
-                    body=inference_service
+                    body=inference_service,
                 )
                 print(f"  ✅ Created InferenceService '{isvc_name}'")
             else:
@@ -142,10 +133,10 @@ def deploy_openvino(
         "model_format": "onnx",
         "model_name": model_name,
         "model_version": model_version,
-        "s3_uri": s3_uri
+        "s3_uri": s3_uri,
     }
 
-    with open(deployment_output.path, 'w') as f:
+    with open(deployment_output.path, "w") as f:
         json.dump(deployment_info, f, indent=2)
 
     print(f"\n✓ Deployment info saved")

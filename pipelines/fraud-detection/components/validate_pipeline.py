@@ -4,13 +4,10 @@ from kfp.dsl import component
 @component(
     # Official Red Hat UBI9 Python image - certified and supported
     base_image="registry.access.redhat.com/ubi9/python-312",
-    packages_to_install=["requests==2.32.3"]
+    packages_to_install=["requests==2.32.3"],
 )
 def validate_pipeline(
-    s3_endpoint: str,
-    s3_bucket: str,
-    model_registry_url: str,
-    namespace: str
+    s3_endpoint: str, s3_bucket: str, model_registry_url: str, namespace: str
 ):
     """
     Validate pipeline prerequisites and configuration.
@@ -41,7 +38,10 @@ def validate_pipeline(
     # Validate Model Registry connectivity
     print(f"\n✓ Checking Model Registry: {model_registry_url}")
     try:
-        response = requests.get(f"{model_registry_url}/api/model_registry/v1alpha3/registered_models", timeout=5)
+        response = requests.get(
+            f"{model_registry_url}/api/model_registry/v1alpha3/registered_models",
+            timeout=5,
+        )
         if response.status_code == 200:
             print(f"  ✅ Model Registry accessible")
         else:
@@ -53,7 +53,7 @@ def validate_pipeline(
     # Validate namespace
     print(f"\n✓ Checking namespace: {namespace}")
     try:
-        with open('/var/run/secrets/kubernetes.io/serviceaccount/namespace') as f:
+        with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace") as f:
             current_ns = f.read().strip()
         print(f"  ✅ Running in namespace: {current_ns}")
         if current_ns != namespace:

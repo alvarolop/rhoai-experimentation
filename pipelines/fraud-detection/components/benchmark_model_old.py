@@ -5,19 +5,17 @@ import json
 
 @component(
     base_image="registry.access.redhat.com/ubi9/python-311",
-    packages_to_install=["requests==2.32.3", "numpy==1.26.4"]
+    packages_to_install=["requests==2.32.3", "numpy==1.26.4"],
 )
 def benchmark_model(
-    endpoint_info: Input[Artifact],
-    metrics: Output[Metrics],
-    num_requests: int = 100
+    endpoint_info: Input[Artifact], metrics: Output[Metrics], num_requests: int = 100
 ):
     import numpy as np
 
-    with open(endpoint_info.path, 'r') as f:
+    with open(endpoint_info.path, "r") as f:
         endpoint_data = json.load(f)
 
-    endpoint_url = endpoint_data['endpoint_url']
+    endpoint_url = endpoint_data["endpoint_url"]
 
     print(f"Benchmarking model at {endpoint_url}")
     print(f"Number of requests: {num_requests}")
@@ -26,12 +24,14 @@ def benchmark_model(
 
     for i in range(num_requests):
         sample_data = {
-            "inputs": [{
-                "name": "input",
-                "shape": [1, 8],
-                "datatype": "FP32",
-                "data": np.random.rand(8).tolist()
-            }]
+            "inputs": [
+                {
+                    "name": "input",
+                    "shape": [1, 8],
+                    "datatype": "FP32",
+                    "data": np.random.rand(8).tolist(),
+                }
+            ]
         }
 
         start_time = time.time()

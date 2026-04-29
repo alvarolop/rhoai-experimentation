@@ -10,33 +10,28 @@ from components.configure_trustyai import configure_trustyai
 
 @dsl.pipeline(
     name="Fraud Detection ML Pipeline",
-    description="Complete ML pipeline: validate, train, register, export to S3, deploy with OpenVINO, monitor with TrustyAI"
+    description="Complete ML pipeline: validate, train, register, export to S3, deploy with OpenVINO, monitor with TrustyAI",
 )
 def fraud_detection_pipeline(
     # Data generation
     num_samples: int = 10000,
     fraud_ratio: float = 0.02,
     test_size: float = 0.2,
-
     # Model training
     n_estimators: int = 100,
-
     # Model registration
     model_name: str = "fraud-detector",
     model_version: str = "v1",
     model_registry_url: str = "http://model-registry-service:8080",
-
     # S3 configuration
     s3_endpoint: str = "minio-service.rhoai-pipelines-demo.svc.cluster.local:9000",
     s3_bucket: str = "models",
     s3_access_key: str = "minio",
     s3_secret_key: str = "minio123",
-
     # Deployment
     namespace: str = "rhoai-pipelines-demo",
-
     # Monitoring
-    enable_trustyai: bool = True
+    enable_trustyai: bool = True,
 ):
     """
     End-to-end fraud detection pipeline with OpenVINO deployment and TrustyAI monitoring.
@@ -56,58 +51,57 @@ def fraud_detection_pipeline(
         s3_endpoint=s3_endpoint,
         s3_bucket=s3_bucket,
         model_registry_url=model_registry_url,
-        namespace=namespace
+        namespace=namespace,
     )
 
     # Step 2: Generate synthetic fraud data
     generate_task = generate_fraud_data(
-        num_samples=num_samples,
-        fraud_ratio=fraud_ratio
+        num_samples=num_samples, fraud_ratio=fraud_ratio
     )
     generate_task.after(validate_task)
 
     # Step 3: Train fraud detection model
     train_task = train_fraud_model(
-        input_data=generate_task.outputs['output_data'],
+        input_data=generate_task.outputs["output_data"],
         test_size=test_size,
-        n_estimators=n_estimators
+        n_estimators=n_estimators,
     )
 
     # Step 4: Register model in Model Registry
     register_task = register_model_real(
-        model_input=train_task.outputs['model_output'],
+        model_input=train_task.outputs["model_output"],
         model_metadata=train_task.output,
         model_registry_url=model_registry_url,
         model_name=model_name,
-        model_version=model_version
+        model_version=model_version,
     )
 
     # Step 5: Export to ONNX and upload to S3
     export_task = export_to_s3(
-        model_input=train_task.outputs['model_output'],
+        model_input=train_task.outputs["model_output"],
         model_metadata=train_task.output,
         s3_endpoint=s3_endpoint,
         s3_bucket=s3_bucket,
         s3_access_key=s3_access_key,
         s3_secret_key=s3_secret_key,
         model_name=model_name,
-        model_version=model_version
+        model_version=model_version,
     )
     export_task.after(register_task)
 
     # Step 6: Deploy with OpenVINO runtime
     deploy_task = deploy_openvino(
-        s3_info_input=export_task.outputs['s3_output'],
+        s3_info_input=export_task.outputs["s3_output"],
         model_name=model_name,
         model_version=model_version,
-        namespace=namespace
+        namespace=namespace,
     )
 
     # Step 7: Configure TrustyAI monitoring
     trustyai_task = configure_trustyai(
-        deployment_info_input=deploy_task.outputs['deployment_output'],
+        deployment_info_input=deploy_task.outputs["deployment_output"],
         namespace=namespace,
-        enable_metrics=enable_trustyai
+        enable_metrics=enable_trustyai,
     )
 
 
@@ -116,6 +110,6 @@ if __name__ == "__main__":
 
     compiler.Compiler().compile(
         pipeline_func=fraud_detection_pipeline,
-        package_path="fraud_detection_pipeline.yaml"
+        package_path="fraud_detection_pipeline.yaml",
     )
     print("✅ Pipeline compiled successfully to fraud_detection_pipeline.yaml")

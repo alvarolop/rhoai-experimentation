@@ -4,21 +4,19 @@ import time
 
 @component(
     base_image="registry.access.redhat.com/ubi9/python-311",
-    packages_to_install=["requests==2.32.3"]
+    packages_to_install=["requests==2.32.3"],
 )
 def deploy_model(
-    registry_info: Input[Artifact],
-    namespace: str,
-    endpoint_output: Output[Artifact]
+    registry_info: Input[Artifact], namespace: str, endpoint_output: Output[Artifact]
 ):
     import json
 
-    with open(registry_info.path, 'r') as f:
+    with open(registry_info.path, "r") as f:
         registry_data = json.load(f)
 
-    model_name = registry_data['model_name']
-    model_version = registry_data['model_version']
-    model_uri = registry_data['model_uri']
+    model_name = registry_data["model_name"]
+    model_version = registry_data["model_version"]
+    model_uri = registry_data["model_uri"]
 
     inference_service_name = f"{model_name}-{model_version}".replace("_", "-").lower()
 
@@ -32,13 +30,17 @@ def deploy_model(
     print(f"Simulating deployment to KServe...")
     time.sleep(2)
 
-    with open(endpoint_output.path, 'w') as f:
-        f.write(json.dumps({
-            "endpoint_url": endpoint_url,
-            "inference_service_name": inference_service_name,
-            "namespace": namespace,
-            "status": "Ready"
-        }))
+    with open(endpoint_output.path, "w") as f:
+        f.write(
+            json.dumps(
+                {
+                    "endpoint_url": endpoint_url,
+                    "inference_service_name": inference_service_name,
+                    "namespace": namespace,
+                    "status": "Ready",
+                }
+            )
+        )
 
     print(f"Model deployed successfully")
     print(f"Inference endpoint: {endpoint_url}")

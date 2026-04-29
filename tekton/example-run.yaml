@@ -2,7 +2,7 @@ apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   generateName: fraud-detection-run-
-  namespace: rhoai-pipelines-demo
+  namespace: rhoai-playground
 spec:
   pipelineRef:
     name: deploy-kfp-pipeline
@@ -17,10 +17,10 @@ spec:
       value: fraud-detection-pipeline
     - name: pipeline-file
       value: pipeline.py
-    - name: dsp-api-url
-      value: http://ds-pipeline-dspa.rhoai-pipelines-demo.svc.cluster.local:8888
-    - name: namespace
-      value: rhoai-pipelines-demo
+    - name: wait-for-completion
+      value: "true"
+    - name: timeout
+      value: "3600"
   workspaces:
     - name: shared-workspace
       persistentVolumeClaim:

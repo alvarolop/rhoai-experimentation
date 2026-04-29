@@ -1,15 +1,15 @@
 ---
-namespace: rhoai-pipelines-demo
+namespace: rhoai-playground
 createNamespace: false
 
 dsp:
-  apiUrl: http://ds-pipeline-dspa.rhoai-pipelines-demo.svc.cluster.local:8888
+  apiUrl: http://ds-pipeline-dspa.rhoai-playground.svc.cluster.local:8888
 
 modelRegistry:
-  url: http://model-registry-service:8080
+  url: http://model-registry-service.rhoai-playground.svc.cluster.local:8080
 
 s3:
-  endpoint: minio-service.rhoai-pipelines-demo.svc.cluster.local:9000
+  endpoint: minio-service.minio.svc.cluster.local:9000
   bucket: pipeline-artifacts
   accessKeyId: ""
   secretAccessKey: ""
@@ -32,7 +32,7 @@ tekton:
   enabled: true
   serviceAccount: pipeline
   image: quay.io/alopezme/rhoai-kfp-builder:latest
-  useClusterTasks: true  # Use Red Hat provided ClusterTasks (git-clone) when available
+  useClusterTasks: true  # Use Red Hat provided tasks from openshift-pipelines namespace
   triggers:
     enabled: true
     exposeRoute: true
