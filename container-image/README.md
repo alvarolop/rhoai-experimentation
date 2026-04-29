@@ -4,11 +4,29 @@ This directory contains the container image definition with pre-installed tools 
 
 ## Why a Custom Image?
 
-Instead of installing dependencies in every Tekton pipeline run, we build a custom image with:
+### Why Not Use RHOAI Workbench Images?
+
+Red Hat OpenShift AI 3.3 provides official workbench images (e.g., `odh-workbench-jupyter-datascience-cpu-py312-rhel9:2025.2`) that include:
+- ✅ KFP SDK 2.14 (same as ours)
+- ✅ ML libraries (pandas, numpy, scikit-learn)
+- ✅ JupyterLab and notebook extensions
+- ❌ **NO linting tools** (Black, flake8, pylint) - not needed for notebooks
+- ❌ **~2GB size** - includes full Jupyter environment
+
+**Our custom image** is optimized for **CI/CD with Tekton**:
+- ✅ **Linting tools included** - Black, flake8, pylint for code quality
+- ✅ **Smaller size (~400MB)** - no Jupyter overhead
+- ✅ **Faster startup** - minimal dependencies
+- ✅ **Disconnected-ready** - no pip installs at runtime
+- ✅ **Aligned versions** - same package versions as RHOAI 2025.2
+
+### Benefits
+
 - ✅ Faster pipeline execution (no install step)
 - ✅ Consistent environment across runs
 - ✅ Reduced network traffic
 - ✅ Offline capability
+- ✅ Purpose-built for Tekton CI/CD (not Jupyter notebooks)
 
 ## Image Contents
 
@@ -19,15 +37,16 @@ Instead of installing dependencies in every Tekton pipeline run, we build a cust
 - curl
 - ca-certificates
 
-**Python Packages:**
-- `kfp==2.8.0` - Kubeflow Pipelines SDK
-- `scikit-learn==1.5.0` - ML library (for pipeline components)
-- `pandas==2.2.2` - Data manipulation
-- `numpy==1.26.4` - Numerical computing
+**Python Packages** (aligned with RHOAI 3.3 2025.2 workbench):
+- `kfp==2.14.0` - Kubeflow Pipelines SDK
+- `kfp-kubernetes==1.3.0` - Kubernetes integration for KFP
+- `scikit-learn==1.7.0` - ML library (for pipeline components)
+- `pandas==2.3.0` - Data manipulation
+- `numpy==2.3.0` - Numerical computing
 - `requests==2.32.3` - HTTP client
-- `pylint==3.1.0` - Python linter
-- `flake8==7.0.0` - Code style checker
-- `black==24.3.0` - Code formatter
+- `pylint==3.3.0` - Python linter
+- `flake8==7.1.0` - Code style checker
+- `black==24.10.0` - Code formatter
 
 ## Building the Image
 
@@ -100,9 +119,31 @@ helm install fraud-detection chart/ \
 
 ## Automated Builds
 
-### GitHub Actions
+### GitHub Actions (Automated)
 
-Create `.github/workflows/build-image.yaml`:
+**✅ Already configured** in `.github/workflows/build-push-image.yaml`
+
+The workflow automatically:
+- Builds on push to main (when Containerfile changes)
+- Pushes to `quay.io/alopezme/rhoai-kfp-builder`
+- Tags with `latest` and commit SHA
+- Supports multi-arch (amd64 + arm64)
+
+See [.github/workflows/README.md](../.github/workflows/README.md) for details.
+
+**Manual trigger**:
+```bash
+# Via GitHub UI
+Actions → Build and Push Container Image → Run workflow
+
+# Or push a tag for semantic versioning
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+**Example (deprecated - use GitHub Actions instead)**:
+
+Create custom workflow:
 
 ```yaml
 name: Build Container Image
