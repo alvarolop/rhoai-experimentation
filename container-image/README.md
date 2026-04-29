@@ -12,7 +12,7 @@ Instead of installing dependencies in every Tekton pipeline run, we build a cust
 
 ## Image Contents
 
-**Base:** `python:3.11-slim`
+**Base:** `registry.access.redhat.com/ubi9/python-311` (Red Hat Universal Base Image 9 with Python 3.11)
 
 **System Tools:**
 - git
@@ -206,8 +206,9 @@ RUN pip install --no-cache-dir \
 
 ## Security
 
+- **Red Hat UBI9-based**: Official Red Hat Universal Base Image with enterprise support
 - Image runs as non-root user (UID 1001)
-- Minimal base image (python:3.11-slim)
+- OpenShift-compatible (supports arbitrary user IDs)
 - No secrets baked into image
 - Regular security scanning recommended
 

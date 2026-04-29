@@ -25,7 +25,8 @@ spec:
       description: The git repo will be cloned here
   steps:
     - name: clone
-      image: registry.redhat.io/openshift-pipelines/pipelines-git-init-rhel8:v1.15
+      # Official Red Hat OpenShift Pipelines image (RHEL9-based)
+      image: registry.redhat.io/openshift-pipelines/pipelines-git-init-rhel9:v1.15
       script: |
         #!/bin/sh
         set -e

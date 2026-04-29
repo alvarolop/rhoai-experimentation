@@ -4,6 +4,7 @@ import numpy as np
 
 
 @component(
+    # Official Red Hat UBI9 Python image - certified and supported
     base_image="registry.access.redhat.com/ubi9/python-311",
     packages_to_install=["pandas==2.2.2", "numpy==1.26.4"]
 )

@@ -11,6 +11,7 @@ This repository showcases:
 - **Model Registry** - Version tracking and metadata management
 - **KServe Integration** - Model serving with InferenceService
 - **Helm Deployment** - Declarative infrastructure as code
+- **Red Hat Official Images** - Uses UBI9 and OpenShift Pipelines certified images
 
 ## Prerequisites
 
@@ -18,10 +19,24 @@ This repository showcases:
 - Namespace configured with:
   - DataSciencePipelines server running
   - Model Registry server accessible
-- **OpenShift Pipelines** operator installed
+- **OpenShift Pipelines** operator installed (v1.15+)
 - S3-compatible storage (MinIO or AWS S3)
 - `oc` and `helm` CLI tools
 - **Custom builder image** (see [Building the Image](#building-the-custom-image))
+
+## Container Images
+
+This demo uses **official Red Hat container images**:
+
+- **Kubeflow Pipeline Components**: `registry.access.redhat.com/ubi9/python-311` (UBI 9)
+- **Tekton Tasks**: `registry.redhat.io/openshift-pipelines/pipelines-git-init-rhel9:v1.15`
+- **Custom Builder**: Based on `registry.access.redhat.com/ubi9/python-311`
+
+All images are:
+- ✅ Certified and supported by Red Hat
+- ✅ OpenShift-compatible (arbitrary user IDs)
+- ✅ Security-scanned and updated regularly
+- ✅ RHEL/UBI9-based for enterprise support
 
 ## Quick Start
 

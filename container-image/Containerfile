@@ -1,7 +1,10 @@
 FROM registry.access.redhat.com/ubi9/python-311
 
 LABEL maintainer="Alvaro Lopez Medina"
-LABEL description="Custom image for RHOAI Kubeflow Pipelines CI/CD with Tekton (UBI9-based)"
+LABEL description="Custom image for RHOAI Kubeflow Pipelines CI/CD with Tekton"
+LABEL io.openshift.tags="rhoai,kubeflow,pipelines,tekton,python"
+LABEL io.k8s.description="Builder image for Red Hat OpenShift AI Pipelines with pre-installed KFP SDK and ML dependencies"
+LABEL io.openshift.expose-services=""
 
 USER 0
 
