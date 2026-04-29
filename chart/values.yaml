@@ -30,6 +30,7 @@ tekton:
   enabled: true
   serviceAccount: pipeline
   image: quay.io/alopezme/rhoai-kfp-builder:latest
+  useClusterTasks: true  # Use Red Hat provided ClusterTasks (git-clone) when available
   triggers:
     enabled: true
     exposeRoute: true

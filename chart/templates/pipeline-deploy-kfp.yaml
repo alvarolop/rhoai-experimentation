@@ -35,6 +35,10 @@ spec:
   tasks:
     - name: git-clone
       taskRef:
+        {{- if .Values.tekton.useClusterTasks }}
+        # Use official Red Hat OpenShift Pipelines ClusterTask
+        kind: ClusterTask
+        {{- end }}
         name: git-clone
       params:
         - name: url

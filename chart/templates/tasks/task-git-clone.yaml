@@ -1,5 +1,7 @@
 ---
-{{- if .Values.tekton.enabled }}
+{{- if and .Values.tekton.enabled (not .Values.tekton.useClusterTasks) }}
+# Custom git-clone Task - only deployed when useClusterTasks is false
+# When useClusterTasks is true, the Red Hat ClusterTask is used instead
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:

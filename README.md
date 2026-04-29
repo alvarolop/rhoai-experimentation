@@ -29,7 +29,7 @@ This repository showcases:
 This demo uses **official Red Hat container images**:
 
 - **Kubeflow Pipeline Components**: `registry.access.redhat.com/ubi9/python-311` (UBI 9)
-- **Tekton Tasks**: `registry.redhat.io/openshift-pipelines/pipelines-git-init-rhel9:v1.15`
+- **Tekton Tasks**: Uses Red Hat OpenShift Pipelines ClusterTasks (git-clone)
 - **Custom Builder**: Based on `registry.access.redhat.com/ubi9/python-311`
 
 All images are:
@@ -37,6 +37,17 @@ All images are:
 - ✅ OpenShift-compatible (arbitrary user IDs)
 - ✅ Security-scanned and updated regularly
 - ✅ RHEL/UBI9-based for enterprise support
+
+### ClusterTasks vs Custom Tasks
+
+By default, this demo uses **Red Hat ClusterTasks** (maintained by Red Hat, installed with OpenShift Pipelines operator):
+
+```yaml
+tekton:
+  useClusterTasks: true  # Recommended
+```
+
+Custom task definitions are also provided as fallback. See [Using ClusterTasks](docs/notes/using-clustertasks.md) for details.
 
 ## Quick Start
 
@@ -223,6 +234,7 @@ clf = LogisticRegression()
 
 - [Kubeflow Pipelines Primer](docs/kubeflow-pipelines-primer.md) - Introduction to KFP concepts
 - [Architecture Details](docs/architecture.md) - Deep dive into the system design
+- [Using ClusterTasks](docs/notes/using-clustertasks.md) - Red Hat ClusterTasks vs custom tasks
 
 ## Troubleshooting
 
