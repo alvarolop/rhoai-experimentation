@@ -15,14 +15,19 @@ This repository showcases:
 
 ## Prerequisites
 
-- OpenShift cluster with **Red Hat OpenShift AI** installed (latest version)
+- OpenShift cluster with **Red Hat OpenShift AI 3.3.x** installed
 - Namespace configured with:
-  - DataSciencePipelines server running
+  - DataSciencePipelines server running (KFP 2.5.0)
   - Model Registry server accessible
 - **OpenShift Pipelines** operator installed (v1.15+)
 - S3-compatible storage (MinIO or AWS S3)
 - `oc` and `helm` CLI tools
 - **Custom builder image** (see [Building the Image](#building-the-custom-image))
+
+**Tested on:**
+- OpenShift 4.20
+- Red Hat OpenShift AI 3.3.0 / 3.3.2
+- OpenShift Pipelines 1.15+
 
 ## Container Images
 

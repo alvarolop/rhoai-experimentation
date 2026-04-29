@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/python-311
+FROM registry.access.redhat.com/ubi9/python-312
 
 LABEL maintainer="Alvaro Lopez Medina"
 LABEL description="Custom image for RHOAI Kubeflow Pipelines CI/CD with Tekton"
@@ -14,16 +14,19 @@ RUN dnf install -y --setopt=tsflags=nodocs \
     && dnf clean all \
     && rm -rf /var/cache/dnf
 
-# Install Python packages (aligned with RHOAI 3.3 2025.2 workbench versions)
+# Install Python packages (aligned with RHOAI 3.3.x 2025.2 workbench versions)
+# Using exact versions from s2i-generic-data-science-notebook:2025.2
 RUN pip install --no-cache-dir \
     kfp==2.14.0 \
     kfp-kubernetes==1.3.0 \
     scikit-learn==1.7.0 \
     pandas==2.3.0 \
     numpy==2.3.0 \
+    scipy==1.16.0 \
+    matplotlib==3.10.0 \
     requests==2.32.3 \
-    pylint==3.3.0 \
-    flake8==7.1.0 \
+    pylint==3.3.1 \
+    flake8==7.1.1 \
     black==24.10.0
 
 # Set working directory

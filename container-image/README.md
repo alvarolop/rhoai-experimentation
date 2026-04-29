@@ -9,16 +9,18 @@ This directory contains the container image definition with pre-installed tools 
 Red Hat OpenShift AI 3.3 provides official workbench images (e.g., `odh-workbench-jupyter-datascience-cpu-py312-rhel9:2025.2`) that include:
 - ✅ KFP SDK 2.14 (same as ours)
 - ✅ ML libraries (pandas, numpy, scikit-learn)
-- ✅ JupyterLab and notebook extensions
+- ✅ Python 3.12
+- ✅ JupyterLab 4.4 and notebook extensions
 - ❌ **NO linting tools** (Black, flake8, pylint) - not needed for notebooks
 - ❌ **~2GB size** - includes full Jupyter environment
 
 **Our custom image** is optimized for **CI/CD with Tekton**:
+- ✅ **Python 3.12** - same as RHOAI 2025.2 workbenches
 - ✅ **Linting tools included** - Black, flake8, pylint for code quality
 - ✅ **Smaller size (~400MB)** - no Jupyter overhead
 - ✅ **Faster startup** - minimal dependencies
 - ✅ **Disconnected-ready** - no pip installs at runtime
-- ✅ **Aligned versions** - same package versions as RHOAI 2025.2
+- ✅ **Aligned versions** - same package versions as RHOAI 3.3.x 2025.2
 
 ### Benefits
 
@@ -30,22 +32,24 @@ Red Hat OpenShift AI 3.3 provides official workbench images (e.g., `odh-workbenc
 
 ## Image Contents
 
-**Base:** `registry.access.redhat.com/ubi9/python-311` (Red Hat Universal Base Image 9 with Python 3.11)
+**Base:** `registry.access.redhat.com/ubi9/python-312` (Red Hat Universal Base Image 9 with Python 3.12)
 
 **System Tools:**
 - git
 - curl
 - ca-certificates
 
-**Python Packages** (aligned with RHOAI 3.3 2025.2 workbench):
-- `kfp==2.14.0` - Kubeflow Pipelines SDK
+**Python Packages** (aligned with RHOAI 3.3.x 2025.2 workbench):
+- `kfp==2.14.0` - Kubeflow Pipelines SDK (latest for DSP 2.x)
 - `kfp-kubernetes==1.3.0` - Kubernetes integration for KFP
 - `scikit-learn==1.7.0` - ML library (for pipeline components)
 - `pandas==2.3.0` - Data manipulation
 - `numpy==2.3.0` - Numerical computing
+- `scipy==1.16.0` - Scientific computing
+- `matplotlib==3.10.0` - Plotting library
 - `requests==2.32.3` - HTTP client
-- `pylint==3.3.0` - Python linter
-- `flake8==7.1.0` - Code style checker
+- `pylint==3.3.1` - Python linter
+- `flake8==7.1.1` - Code style checker
 - `black==24.10.0` - Code formatter
 
 ## Building the Image
