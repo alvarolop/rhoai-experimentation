@@ -1,0 +1,131 @@
+---
+{{- if .Values.tekton.enabled }}
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: execute-ds-pipeline
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "rhoai-pipelines-demo.labels" . | nindent 4 }}
+  annotations:
+    description: |
+      Execute a Kubeflow/Data Science Pipeline using the KFP Python SDK.
+      This task compiles the pipeline, submits it to the DSP server,
+      waits for completion, and returns the run ID.
+spec:
+  params:
+    - name: pipeline-file
+      type: string
+      description: Path to the pipeline Python file (e.g., pipelines/fraud-detection/pipeline.py)
+      default: "pipeline.py"
+    - name: pipeline-name
+      type: string
+      description: Name for the pipeline and experiment
+    - name: wait-for-completion
+      type: string
+      description: Whether to wait for pipeline completion (true/false)
+      default: "true"
+    - name: timeout
+      type: string
+      description: Timeout in seconds for pipeline execution
+      default: "7200"
+  workspaces:
+    - name: source
+      description: Workspace containing the pipeline source code
+  results:
+    - name: run-id
+      description: KFP Run ID of the executed pipeline
+    - name: status
+      description: Pipeline execution status (succeeded/failed)
+  steps:
+    - name: execute-pipeline
+      # Custom builder image with KFP SDK pre-installed (no pip install needed)
+      image: {{ .Values.tekton.image }}
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/bin/bash
+        set -e
+
+        PIPELINE_DIR=$(dirname $(params.pipeline-file))
+        PIPELINE_FILE=$(basename $(params.pipeline-file))
+
+        cd ${PIPELINE_DIR}
+
+        echo "🚀 Executing Data Science Pipeline: $(params.pipeline-name)"
+        echo "   Pipeline file: $(params.pipeline-file)"
+        echo "   Wait for completion: $(params.wait-for-completion)"
+        echo "   Timeout: $(params.timeout)s"
+
+        cat << 'EOF' | python3
+        import kfp
+        import sys
+        import importlib.util
+
+        # Read namespace from ServiceAccount
+        with open('/var/run/secrets/kubernetes.io/serviceaccount/namespace') as f:
+            namespace = f.read().strip()
+
+        # DSP API endpoint (RHOAI 3.3 uses HTTPS on 8443)
+        dsp_host = f'https://ds-pipeline-dspa.{namespace}.svc:8443'
+
+        # ServiceAccount token authentication
+        with open('/var/run/secrets/kubernetes.io/serviceaccount/token') as f:
+            token = f.read().strip()
+
+        ssl_ca = '/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt'
+
+        print(f'Connecting to DSP: {dsp_host}')
+
+        # Create KFP client
+        client = kfp.Client(host=dsp_host, existing_token=token, ssl_ca_cert=ssl_ca)
+
+        # Import pipeline module
+        spec = importlib.util.spec_from_file_location("pipeline", "${PIPELINE_FILE}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        # Find pipeline function
+        pipeline_func = None
+        for name in dir(module):
+            obj = getattr(module, name)
+            if callable(obj) and hasattr(obj, 'component_spec'):
+                pipeline_func = obj
+                break
+
+        if not pipeline_func:
+            print('ERROR: No pipeline function found')
+            sys.exit(1)
+
+        print(f'Executing: {pipeline_func.__name__}')
+
+        # Create and run pipeline
+        run = client.create_run_from_pipeline_func(
+            pipeline_func,
+            arguments={},
+            experiment_name="$(params.pipeline-name)",
+            namespace=namespace,
+            enable_caching=True
+        )
+
+        print(f'Run ID: {run.run_id}')
+        with open('$(results.run-id.path)', 'w') as f:
+            f.write(run.run_id)
+
+        # Wait if requested
+        if "$(params.wait-for-completion)" == "true":
+            print('Waiting for completion...')
+            client.wait_for_run_completion(run.run_id, timeout=int("$(params.timeout)"))
+            status = client.get_run(run.run_id).run.status
+            print(f'Status: {status}')
+            with open('$(results.status.path)', 'w') as f:
+                f.write(status)
+            if status != 'Succeeded':
+                sys.exit(1)
+        else:
+            with open('$(results.status.path)', 'w') as f:
+                f.write('Running')
+
+        EOF
+
+        echo "✅ Task completed"
+{{- end }}

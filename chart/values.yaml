@@ -25,6 +25,8 @@ git:
 
 kfpPipeline:
   name: fraud-detection-pipeline
+  waitForCompletion: true  # Wait for pipeline execution to finish
+  timeout: 3600  # Timeout in seconds (1 hour)
 
 tekton:
   enabled: true

@@ -182,11 +182,17 @@ See [pipelines/fraud-detection/README.md](pipelines/fraud-detection/README.md) f
 
 ### Tekton Automation
 
-The Tekton pipeline automates deployment:
+The Tekton pipeline automates deployment with optimized tasks:
 
-1. **Lint** - Validates Python syntax (fails fast on errors)
-2. **Compile & Upload** - Generates YAML and uploads to DSP server
-3. **Run** - Triggers pipeline execution
+1. **Git Clone** - Clones repository using Red Hat ClusterTask
+2. **Lint** - Validates code with Black, flake8, and pylint (pre-installed)
+3. **Execute Pipeline** - Compiles, uploads, and runs DSP pipeline (waits for completion)
+
+**Key optimizations for disconnected environments:**
+- Uses custom builder image with all dependencies pre-installed
+- No pip installs during execution (fast startup)
+- Native Kubernetes authentication (ServiceAccount tokens)
+- Single consolidated task for pipeline execution
 
 See [tekton/README.md](tekton/README.md) for usage.
 

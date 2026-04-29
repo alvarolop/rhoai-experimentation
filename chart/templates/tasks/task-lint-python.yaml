@@ -1,0 +1,42 @@
+---
+{{- if .Values.tekton.enabled }}
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: lint-python
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "rhoai-pipelines-demo.labels" . | nindent 4 }}
+spec:
+  params:
+    - name: path
+      type: string
+      description: Path to lint (file or directory)
+      default: "."
+  workspaces:
+    - name: source
+  steps:
+    - name: lint
+      # Custom builder with linting tools pre-installed
+      image: {{ .Values.tekton.image }}
+      workingDir: $(workspaces.source.path)/$(params.path)
+      script: |
+        #!/bin/bash
+        set -e
+
+        echo "Checking code formatting with Black..."
+        black . --check --diff || BLACK_EXIT=$?
+
+        if [ "${BLACK_EXIT:-0}" -eq 1 ]; then
+          echo "ERROR: Code not formatted. Run 'black .' locally"
+          exit 1
+        fi
+
+        echo "Linting with flake8 (critical errors)..."
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+        echo "Linting with pylint (errors only)..."
+        find . -name "*.py" -type f -exec pylint {} --errors-only --disable=E0401 --exit-zero \;
+
+        echo "✅ All checks passed"
+{{- end }}

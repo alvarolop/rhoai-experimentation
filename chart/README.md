@@ -166,12 +166,11 @@ oc delete secret s3-credentials -n <namespace>
 - `pvc-pipeline-workspace.yaml` - Workspace storage
 - `secret-s3-credentials.yaml` - S3 credentials
 
-### Tasks (if `useClusterTasks: false`)
+### Tasks
 
-- `tasks/task-git-clone.yaml` - Clone git repository
-- `tasks/task-lint-kfp-pipeline.yaml` - Lint Python pipeline
-- `tasks/task-compile-upload-kfp.yaml` - Compile and upload to DSP
-- `tasks/task-run-kfp-pipeline.yaml` - Trigger pipeline run
+- `tasks/task-git-clone.yaml` - Clone git repository (only if `useClusterTasks: false`)
+- `tasks/task-lint-python.yaml` - Lint Python code with Black, flake8, pylint
+- `tasks/task-execute-ds-pipeline.yaml` - Compile, upload, and execute DSP pipeline
 
 ### Triggers (if `triggers.enabled: true`)
 

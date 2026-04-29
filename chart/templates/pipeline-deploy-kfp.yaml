@@ -24,12 +24,12 @@ spec:
     - name: pipeline-file
       type: string
       default: "pipeline.py"
-    - name: dsp-api-url
+    - name: wait-for-completion
       type: string
-      default: {{ .Values.dsp.apiUrl }}
-    - name: namespace
+      default: "{{ .Values.kfpPipeline.waitForCompletion }}"
+    - name: timeout
       type: string
-      default: {{ .Values.namespace }}
+      default: "{{ .Values.kfpPipeline.timeout }}"
   workspaces:
     - name: shared-workspace
   tasks:
@@ -51,19 +51,19 @@ spec:
 
     - name: lint
       taskRef:
-        name: lint-kfp-pipeline
+        name: lint-python
       runAfter:
         - git-clone
       params:
-        - name: pipeline-file
-          value: $(params.pipeline-path)/$(params.pipeline-file)
+        - name: path
+          value: $(params.pipeline-path)
       workspaces:
         - name: source
           workspace: shared-workspace
 
-    - name: compile-upload
+    - name: execute-pipeline
       taskRef:
-        name: compile-upload-kfp
+        name: execute-ds-pipeline
       runAfter:
         - lint
       params:
@@ -71,22 +71,11 @@ spec:
           value: $(params.pipeline-path)/$(params.pipeline-file)
         - name: pipeline-name
           value: $(params.pipeline-name)
-        - name: dsp-api-url
-          value: $(params.dsp-api-url)
+        - name: wait-for-completion
+          value: $(params.wait-for-completion)
+        - name: timeout
+          value: $(params.timeout)
       workspaces:
         - name: source
           workspace: shared-workspace
-
-    - name: run
-      taskRef:
-        name: run-kfp-pipeline
-      runAfter:
-        - compile-upload
-      params:
-        - name: pipeline-id
-          value: $(tasks.compile-upload.results.pipeline-id)
-        - name: dsp-api-url
-          value: $(params.dsp-api-url)
-        - name: namespace
-          value: $(params.namespace)
 {{- end }}
