@@ -175,13 +175,15 @@ See [docs/architecture.md](docs/architecture.md) for detailed flow.
 
 ### Kubeflow Pipeline
 
-The fraud detection pipeline consists of 5 steps:
+The fraud detection pipeline demonstrates a complete ML workflow with 7 real components (no mocks):
 
-1. **Generate Synthetic Data** - Creates 10,000 transaction records with realistic fraud patterns (~2% fraud rate)
-2. **Train Model** - Trains a RandomForestClassifier with class balancing
-3. **Register Model** - Stores model metadata and artifacts in Model Registry
-4. **Deploy Model** - Creates a KServe InferenceService with mlserver runtime
-5. **Benchmark Model** - Measures inference latency (p50, p95, p99) and throughput
+1. **Validate Pipeline** - Verifies S3 and Model Registry connectivity before execution
+2. **Generate Synthetic Data** - Creates 10,000 transaction records with realistic fraud patterns (~2% fraud rate)
+3. **Train Model** - Trains a RandomForestClassifier with class balancing and logs metrics
+4. **Register in Model Registry** - Stores model in RHOAI Model Registry via REST API
+5. **Export to ONNX & Upload to S3** - Converts sklearn model to ONNX format and uploads to S3/MinIO
+6. **Deploy with OpenVINO** - Creates KServe InferenceService with OpenVINO runtime (CPU-optimized)
+7. **Configure TrustyAI** - Sets up bias detection and fairness monitoring (SPD, DIR metrics)
 
 See [pipelines/fraud-detection/README.md](pipelines/fraud-detection/README.md) for component details.
 
@@ -192,6 +194,8 @@ The Tekton pipeline automates deployment with optimized tasks:
 1. **Git Clone** - Clones repository using Red Hat ClusterTask
 2. **Lint** - Validates code with Black, flake8, and pylint (pre-installed)
 3. **Execute Pipeline** - Compiles, uploads, and runs DSP pipeline (waits for completion)
+
+The pipeline orchestrates the 7-step ML workflow, deploying the model to OpenVINO and configuring TrustyAI monitoring automatically.
 
 **Key optimizations for disconnected environments:**
 - Uses custom builder image with all dependencies pre-installed
