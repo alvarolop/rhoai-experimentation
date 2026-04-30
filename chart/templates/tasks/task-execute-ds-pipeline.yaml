@@ -100,19 +100,20 @@ spec:
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
-        # Find pipeline function
+        # Find pipeline function (decorated with @dsl.pipeline)
         pipeline_func = None
         for name in dir(module):
             obj = getattr(module, name)
-            if callable(obj) and hasattr(obj, 'component_spec'):
+            # Pipeline functions have pipeline_spec attribute (not component_spec)
+            if callable(obj) and hasattr(obj, 'pipeline_spec'):
                 pipeline_func = obj
+                print(f'Found pipeline function: {name}')
                 break
 
         if not pipeline_func:
             print('ERROR: No pipeline function found')
+            print('Available objects:', [name for name in dir(module) if not name.startswith('_')])
             sys.exit(1)
-
-        print(f'Executing: {pipeline_func.__name__}')
 
         # Create and run pipeline
         run = client.create_run_from_pipeline_func(
