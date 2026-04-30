@@ -63,14 +63,14 @@ Build and push the container image with pre-installed dependencies:
 podman login quay.io
 
 # Build and push
-cd container-image
+cd container-image-tekton
 IMAGE_NAME=quay.io/alopezme/rhoai-kfp-builder \
 IMAGE_TAG=latest \
 PUSH=true \
 ./build-image.sh
 ```
 
-See [container-image/README.md](container-image/README.md) for details.
+See [container-image-tekton/README.md](container-image-tekton/README.md) for details.
 
 ### 2. Install the Helm Chart
 

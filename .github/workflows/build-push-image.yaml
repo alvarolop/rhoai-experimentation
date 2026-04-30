@@ -6,14 +6,14 @@ on:
     branches:
       - main
     paths:
-      - 'container-image/**'
+      - 'container-image-tekton/**'
       - 'pipelines/**/requirements.txt'
       - '.github/workflows/build-push-image.yaml'
   pull_request:
     branches:
       - main
     paths:
-      - 'container-image/**'
+      - 'container-image-tekton/**'
   workflow_dispatch:
     inputs:
       image_tag:
@@ -67,8 +67,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: ./container-image
-          file: ./container-image/Containerfile
+          context: ./container-image-tekton
+          file: ./container-image-tekton/Containerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}

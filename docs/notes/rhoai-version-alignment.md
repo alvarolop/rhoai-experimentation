@@ -124,9 +124,9 @@ When upgrading to RHOAI 3.4 or newer with 2025.2 workbench images:
 - scikit-learn: 1.6 → 1.7
 
 **Migration steps:**
-1. Update `container-image/Containerfile` with new versions
-2. Rebuild and push custom image
-3. Update `chart/values.yaml` with new image tag
+1. Update `container-image-tekton/Containerfile` and `container-image-kfp/Containerfile` with new versions
+2. Rebuild and push custom images
+3. Update `chart/values.yaml` with new image tags
 4. Test pipelines for compatibility
 
 ## Verification
@@ -272,5 +272,6 @@ Use exact versions from RHOAI workbench images (see table above)
 ## Related Documentation
 
 - [Disconnected Optimization](disconnected-optimization.md)
-- [Container Image README](../../container-image/README.md)
+- [Tekton Image README](../../container-image-tekton/README.md)
+- [KFP Component Image README](../../container-image-kfp/README.md)
 - [Using Red Hat Tasks](using-red-hat-tasks.md)

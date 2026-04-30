@@ -304,7 +304,8 @@ Could not resolve host: ds-pipeline-dspa.<namespace>.svc
 
 ## Related Documentation
 
-- [Container Image README](../../container-image/README.md) - Building custom image
+- [Tekton Image README](../../container-image-tekton/README.md) - Building Tekton CI/CD image
+- [KFP Component Image README](../../container-image-kfp/README.md) - Building KFP component image
 - [Using Red Hat Tasks](using-red-hat-tasks.md) - Red Hat provided tasks via cluster resolver
 - [Architecture](../architecture.md) - System design
 
