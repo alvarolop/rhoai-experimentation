@@ -32,6 +32,15 @@ spec:
       default: "{{ .Values.kfpPipeline.timeout }}"
   workspaces:
     - name: shared-workspace
+    {{- if .Values.git.auth.enabled }}
+    {{- if eq .Values.git.auth.type "ssh" }}
+    - name: git-ssh-credentials
+      optional: false
+    {{- else if eq .Values.git.auth.type "basic" }}
+    - name: git-basic-credentials
+      optional: false
+    {{- end }}
+    {{- end }}
   tasks:
     - name: git-clone
       taskRef:
@@ -53,6 +62,15 @@ spec:
       workspaces:
         - name: output
           workspace: shared-workspace
+        {{- if .Values.git.auth.enabled }}
+        {{- if eq .Values.git.auth.type "ssh" }}
+        - name: ssh-directory
+          workspace: git-ssh-credentials
+        {{- else if eq .Values.git.auth.type "basic" }}
+        - name: basic-auth
+          workspace: git-basic-credentials
+        {{- end }}
+        {{- end }}
 
     - name: lint
       taskRef:

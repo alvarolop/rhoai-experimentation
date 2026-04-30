@@ -25,3 +25,11 @@ spec:
     - name: shared-workspace
       persistentVolumeClaim:
         claimName: pipeline-workspace
+    # Uncomment for SSH authentication (if git.auth.enabled=true and git.auth.type=ssh)
+    # - name: git-ssh-credentials
+    #   secret:
+    #     secretName: git-auth-ssh
+    # Uncomment for basic authentication (if git.auth.enabled=true and git.auth.type=basic)
+    # - name: git-basic-credentials
+    #   secret:
+    #     secretName: git-auth-basic

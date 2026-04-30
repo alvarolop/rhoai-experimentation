@@ -66,6 +66,13 @@ helm install fraud-detection . \
 | `git.url` | Git repository URL | `https://github.com/alvarolop/rhoai-experimentation.git` |
 | `git.revision` | Branch/tag/SHA to clone | `main` |
 | `git.pipelinePath` | Path to pipeline in repo | `pipelines/fraud-detection` |
+| **Git Authentication** | | |
+| `git.auth.enabled` | Enable Git authentication | `false` |
+| `git.auth.type` | Auth type: `ssh` or `basic` | `ssh` |
+| `git.auth.sshPrivateKey` | SSH private key content | `""` |
+| `git.auth.knownHosts` | SSH known_hosts content | `""` (optional) |
+| `git.auth.username` | Git username (basic auth) | `""` |
+| `git.auth.password` | Password or token (basic auth) | `""` |
 | **Kubeflow Pipeline** | | |
 | `kfpPipeline.name` | Pipeline name | `fraud-detection-pipeline` |
 | **Tekton** | | |
@@ -100,6 +107,38 @@ taskRef:
 - Tasks are maintained by Red Hat and updated automatically
 
 See [Using Red Hat Tasks](../docs/notes/using-red-hat-tasks.md) for details.
+
+### Git Authentication
+
+Optionally configure authentication for private Git repositories:
+
+**SSH Authentication (recommended):**
+
+```bash
+helm install fraud-detection . \
+  --set git.url="git@github.com:owner/private-repo.git" \
+  --set git.auth.enabled=true \
+  --set git.auth.type=ssh \
+  --set-file git.auth.sshPrivateKey=~/.ssh/id_rsa \
+  --set git.auth.knownHosts="$(ssh-keyscan github.com)" \
+  --set s3.accessKeyId=<key> \
+  --set s3.secretAccessKey=<secret>
+```
+
+**Basic Authentication (token):**
+
+```bash
+helm install fraud-detection . \
+  --set git.url="https://github.com/owner/private-repo.git" \
+  --set git.auth.enabled=true \
+  --set git.auth.type=basic \
+  --set git.auth.username=myuser \
+  --set git.auth.password=ghp_token \
+  --set s3.accessKeyId=<key> \
+  --set s3.secretAccessKey=<secret>
+```
+
+See [Git Authentication Guide](../docs/notes/git-authentication.md) for complete documentation.
 
 ## Usage
 
@@ -254,6 +293,7 @@ helm lint .
 
 - [Main README](../README.md) - Project overview
 - [Using Red Hat Tasks](../docs/notes/using-red-hat-tasks.md) - Red Hat provided tasks via cluster resolver
+- [Git Authentication](../docs/notes/git-authentication.md) - SSH and basic auth for private repositories
 - [Tekton Triggers Setup](../docs/notes/tekton-triggers-setup.md) - Webhook configuration
 - [Architecture](../docs/architecture.md) - System design
 

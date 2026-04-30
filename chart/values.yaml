@@ -22,6 +22,15 @@ git:
   url: https://github.com/alvarolop/rhoai-experimentation.git
   revision: main
   pipelinePath: pipelines/fraud-detection
+  auth:
+    enabled: false  # Enable Git authentication
+    type: ssh  # ssh or basic
+    # SSH authentication (type: ssh)
+    sshPrivateKey: ""  # SSH private key content
+    knownHosts: ""  # SSH known_hosts content (optional, recommended for security)
+    # Basic authentication (type: basic)
+    username: ""  # Git username
+    password: ""  # Git password or personal access token
 
 kfpPipeline:
   name: fraud-detection-pipeline
