@@ -101,24 +101,29 @@ spec:
         spec.loader.exec_module(module)
 
         # Find pipeline function (decorated with @dsl.pipeline)
-        # Look for functions defined in this module (not imported) with pipeline_spec
+        # KFP 2.x: pipeline functions have 'component_spec' or 'pipeline_spec' attribute
+        # and are defined in the loaded module (not imported)
         pipeline_func = None
         for name in dir(module):
             if name.startswith('_'):
                 continue
             obj = getattr(module, name)
+            # Debug: check attributes of each object
+            if callable(obj) and hasattr(obj, '__module__'):
+                print(f'Checking {name}: module={obj.__module__}, attrs={[a for a in dir(obj) if "spec" in a.lower()]}')
+
             # Check if it's a pipeline function defined in this module
             if (callable(obj) and
-                hasattr(obj, 'pipeline_spec') and
                 hasattr(obj, '__module__') and
-                obj.__module__ == 'pipeline'):
+                obj.__module__ == 'pipeline' and
+                (hasattr(obj, 'pipeline_spec') or hasattr(obj, 'component_spec'))):
                 pipeline_func = obj
                 print(f'Found pipeline function: {name}')
                 break
 
         if not pipeline_func:
             print('ERROR: No pipeline function found')
-            print('Available objects:', [name for name in dir(module) if not name.startswith('_')])
+            print('Available callables:', [(name, getattr(module, name).__module__) for name in dir(module) if not name.startswith('_') and callable(getattr(module, name)) and hasattr(getattr(module, name), '__module__')])
             sys.exit(1)
 
         # Create and run pipeline
