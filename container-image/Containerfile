@@ -1,10 +1,11 @@
-FROM registry.access.redhat.com/ubi9/python-312
+FROM registry.access.redhat.com/ubi9/python-311
 
 LABEL maintainer="Alvaro Lopez Medina"
-LABEL description="Custom image for RHOAI Kubeflow Pipelines CI/CD with Tekton"
-LABEL io.openshift.tags="rhoai,kubeflow,pipelines,tekton,python"
-LABEL io.k8s.description="Builder image for Red Hat OpenShift AI Pipelines with pre-installed KFP SDK and ML dependencies"
+LABEL description="Custom builder image for RHOAI Kubeflow Pipelines CI/CD with Tekton"
+LABEL io.openshift.tags="rhoai,kubeflow,pipelines,tekton,python,ml"
+LABEL io.k8s.description="Builder image for Red Hat OpenShift AI Pipelines with pre-installed KFP SDK, ML libraries, and linting tools for disconnected environments"
 LABEL io.openshift.expose-services=""
+LABEL version="1.0"
 
 USER 0
 
@@ -14,28 +15,43 @@ RUN dnf install -y --setopt=tsflags=nodocs \
     && dnf clean all \
     && rm -rf /var/cache/dnf
 
-# Install Python packages (aligned with RHOAI 3.3.x 2025.2 workbench versions)
-# Using exact versions from s2i-generic-data-science-notebook:2025.2
+# Install Python packages for Tekton tasks and Kubeflow pipeline components
+# All packages pre-installed to support disconnected/air-gapped environments
+# Versions aligned with RHOAI 3.3.x workbench images and pipeline component requirements
+
+# Tekton CI/CD tools
 RUN pip install --no-cache-dir \
-    kfp==2.14.0 \
+    # Kubeflow Pipelines SDK (for Tekton pipeline compilation and execution)
+    kfp==2.14.1 \
     kfp-kubernetes==1.3.0 \
+    # Code quality and linting tools (for Tekton lint task)
+    black==24.10.0 \
+    flake8==7.1.1 \
+    pylint==3.3.1
+
+# ML and data science libraries (for Kubeflow pipeline components)
+RUN pip install --no-cache-dir \
+    # Core ML libraries
     scikit-learn==1.7.0 \
     pandas==2.3.0 \
     numpy==2.3.0 \
-    scipy==1.16.0 \
-    matplotlib==3.10.0 \
-    requests==2.32.3 \
-    pylint==3.3.1 \
-    flake8==7.1.1 \
-    black==24.10.0
+    # ONNX conversion and model export
+    skl2onnx==1.18.0 \
+    onnx==1.17.0 \
+    # Cloud storage and Kubernetes clients
+    boto3==1.37.0 \
+    kubernetes==31.0.0 \
+    # HTTP client for REST APIs
+    requests==2.32.3
 
 # Set working directory
 WORKDIR /workspace
 
-# Set permissions for OpenShift arbitrary user IDs
+# Set permissions for OpenShift arbitrary user IDs (required for random UIDs)
 RUN chown -R 1001:0 /workspace && \
     chmod -R g=u /workspace
 
+# Switch to non-root user
 USER 1001
 
 CMD ["/bin/bash"]

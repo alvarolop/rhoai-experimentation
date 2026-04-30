@@ -17,15 +17,13 @@ spec:
     - name: source
   steps:
     - name: lint
-      # Use Red Hat UBI9 Python 3.11 for consistency with RHOAI
-      image: registry.access.redhat.com/ubi9/python-311
+      # Custom builder image with pre-installed linting tools
+      # No pip install needed - optimized for disconnected environments
+      image: {{ .Values.tekton.image }}
       workingDir: $(workspaces.source.path)/$(params.path)
       script: |
         #!/bin/bash
         set -e
-
-        echo "Installing linting tools..."
-        pip install --quiet --no-cache-dir black==24.10.0 flake8==7.1.1 pylint==3.3.1
 
         echo "Checking code formatting with Black..."
         black . --check --diff || BLACK_EXIT=$?

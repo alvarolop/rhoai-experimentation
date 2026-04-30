@@ -40,7 +40,7 @@ kfpPipeline:
 tekton:
   enabled: true
   serviceAccount: pipeline
-  image: quay.io/alopezme/rhoai-kfp-builder:latest
+  image: quay.io/alopezme/rhoai-experimentation-tekton:latest
   triggers:
     enabled: true
     exposeRoute: true

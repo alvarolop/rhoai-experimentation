@@ -2,7 +2,7 @@
 set -e
 
 # Configuration
-IMAGE_NAME="${IMAGE_NAME:-quay.io/alopezme/rhoai-kfp-builder}"
+IMAGE_NAME="${IMAGE_NAME:-quay.io/alopezme/rhoai-experimentation-tekton}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 PUSH="${PUSH:-false}"
 
