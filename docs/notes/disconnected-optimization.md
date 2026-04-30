@@ -87,11 +87,11 @@ client = kfp.Client(
 - Works in disconnected clusters
 - Leverages OpenShift security
 
-### 4. Red Hat ClusterTasks
+### 4. Red Hat Provided Tasks
 
-Uses **official ClusterTasks** from OpenShift Pipelines operator:
+Uses **official tasks** from `openshift-pipelines` namespace:
 
-- `git-clone` - Maintained by Red Hat
+- `git-clone` - Maintained by Red Hat, referenced via cluster resolver
 - Automatically updated with operator
 - No custom task maintenance needed
 
@@ -305,7 +305,7 @@ Could not resolve host: ds-pipeline-dspa.<namespace>.svc
 ## Related Documentation
 
 - [Container Image README](../../container-image/README.md) - Building custom image
-- [Using ClusterTasks](using-clustertasks.md) - Red Hat ClusterTasks
+- [Using Red Hat Tasks](using-red-hat-tasks.md) - Red Hat provided tasks via cluster resolver
 - [Architecture](../architecture.md) - System design
 
 ## References

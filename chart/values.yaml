@@ -32,7 +32,6 @@ tekton:
   enabled: true
   serviceAccount: pipeline
   image: quay.io/alopezme/rhoai-kfp-builder:latest
-  useClusterTasks: true  # Use Red Hat provided tasks from openshift-pipelines namespace
   triggers:
     enabled: true
     exposeRoute: true

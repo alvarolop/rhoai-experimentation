@@ -273,4 +273,4 @@ Use exact versions from RHOAI workbench images (see table above)
 
 - [Disconnected Optimization](disconnected-optimization.md)
 - [Container Image README](../../container-image/README.md)
-- [Using ClusterTasks](using-clustertasks.md)
+- [Using Red Hat Tasks](using-red-hat-tasks.md)

@@ -19,7 +19,7 @@ This repository showcases:
 - Namespace configured with:
   - DataSciencePipelines server running (KFP 2.5.0)
   - Model Registry server accessible
-- **OpenShift Pipelines** operator installed (v1.15+)
+- **OpenShift Pipelines** operator installed (v1.15 or later)
 - S3-compatible storage (MinIO or AWS S3)
 - `oc` and `helm` CLI tools
 - **Custom builder image** (see [Building the Image](#building-the-custom-image))
@@ -27,14 +27,15 @@ This repository showcases:
 **Tested on:**
 - OpenShift 4.20
 - Red Hat OpenShift AI 3.3.0 / 3.3.2
-- OpenShift Pipelines 1.15+
+- OpenShift Pipelines 1.15 - 1.22
 
 ## Container Images
 
 This demo uses **official Red Hat container images**:
 
 - **Kubeflow Pipeline Components**: `registry.access.redhat.com/ubi9/python-311` (UBI 9)
-- **Tekton Tasks**: Uses Red Hat OpenShift Pipelines ClusterTasks (git-clone)
+- **Tekton Tasks**: Uses Red Hat provided tasks from `openshift-pipelines` namespace via cluster resolver
+  - `git-clone` - Official Red Hat task for Git repository cloning
 - **Custom Builder**: Based on `registry.access.redhat.com/ubi9/python-311`
 
 All images are:
@@ -43,16 +44,13 @@ All images are:
 - ✅ Security-scanned and updated regularly
 - ✅ RHEL/UBI9-based for enterprise support
 
-### ClusterTasks vs Custom Tasks
+### Red Hat Provided Tasks
 
-By default, this demo uses **Red Hat ClusterTasks** (maintained by Red Hat, installed with OpenShift Pipelines operator):
-
-```yaml
-tekton:
-  useClusterTasks: true  # Recommended
-```
-
-Custom task definitions are also provided as fallback. See [Using ClusterTasks](docs/notes/using-clustertasks.md) for details.
+This demo exclusively uses Red Hat provided tasks from the `openshift-pipelines` namespace, referenced via the cluster resolver. This ensures:
+- Tasks are maintained by Red Hat
+- Automatic updates with OpenShift Pipelines operator
+- No custom task definitions needed
+- Consistent behavior across OpenShift clusters
 
 ## Quick Start
 
@@ -191,7 +189,7 @@ See [pipelines/fraud-detection/README.md](pipelines/fraud-detection/README.md) f
 
 The Tekton pipeline automates deployment with optimized tasks:
 
-1. **Git Clone** - Clones repository using Red Hat ClusterTask
+1. **Git Clone** - Clones repository using Red Hat provided task from `openshift-pipelines` namespace
 2. **Lint** - Validates code with Black, flake8, and pylint (pre-installed)
 3. **Execute Pipeline** - Compiles, uploads, and runs DSP pipeline (waits for completion)
 
@@ -249,7 +247,7 @@ clf = LogisticRegression()
 
 - [Kubeflow Pipelines Primer](docs/kubeflow-pipelines-primer.md) - Introduction to KFP concepts
 - [Architecture Details](docs/architecture.md) - Deep dive into the system design
-- [Using ClusterTasks](docs/notes/using-clustertasks.md) - Red Hat ClusterTasks vs custom tasks
+- [Using Red Hat Tasks](docs/notes/using-red-hat-tasks.md) - Red Hat provided tasks via cluster resolver
 
 ## Troubleshooting
 

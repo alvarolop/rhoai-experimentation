@@ -38,7 +38,6 @@ helm install fraud-detection . \
 helm install fraud-detection . \
   --namespace rhoai-demo \
   --set tekton.image=quay.io/myorg/custom-builder:v1 \
-  --set tekton.useClusterTasks=true \
   --set tekton.triggers.enabled=true \
   --set dsp.apiUrl=http://ds-pipeline-dspa.rhoai-demo.svc.cluster.local:8888
 ```
@@ -73,33 +72,34 @@ helm install fraud-detection . \
 | `tekton.enabled` | Enable Tekton resources | `true` |
 | `tekton.serviceAccount` | ServiceAccount for pipelines | `pipeline` |
 | `tekton.image` | Builder image with KFP SDK | `quay.io/alopezme/rhoai-kfp-builder:latest` |
-| `tekton.useClusterTasks` | Use Red Hat ClusterTasks | `true` (recommended) |
 | **Tekton Triggers** | | |
 | `tekton.triggers.enabled` | Enable webhook triggers | `true` |
 | `tekton.triggers.exposeRoute` | Create OpenShift Route | `true` |
 | `tekton.triggers.webhookSecret` | Webhook secret for GitHub | `""` (auto-generated) |
 
-### ClusterTasks Configuration
+### Red Hat Tasks Integration
 
-**Recommended (default):**
+This chart uses **Red Hat provided tasks** from the `openshift-pipelines` namespace via cluster resolver. 
 
-```yaml
-tekton:
-  useClusterTasks: true
-```
-
-Uses Red Hat maintained ClusterTasks from OpenShift Pipelines operator.
-
-**Custom Tasks:**
+The `git-clone` task is referenced automatically:
 
 ```yaml
-tekton:
-  useClusterTasks: false
+taskRef:
+  resolver: cluster
+  params:
+    - name: kind
+      value: task
+    - name: name
+      value: git-clone
+    - name: namespace
+      value: openshift-pipelines
 ```
 
-Deploys custom Task definitions from this chart.
+**Requirements:**
+- OpenShift Pipelines operator 1.15 or later installed
+- Tasks are maintained by Red Hat and updated automatically
 
-See [Using ClusterTasks](../docs/notes/using-clustertasks.md) for details.
+See [Using Red Hat Tasks](../docs/notes/using-red-hat-tasks.md) for details.
 
 ## Usage
 
@@ -168,9 +168,10 @@ oc delete secret s3-credentials -n <namespace>
 
 ### Tasks
 
-- `tasks/task-git-clone.yaml` - Clone git repository (only if `useClusterTasks: false`)
 - `tasks/task-lint-python.yaml` - Lint Python code with Black, flake8, pylint
 - `tasks/task-execute-ds-pipeline.yaml` - Compile, upload, and execute DSP pipeline
+
+**Note:** The `git-clone` task is provided by Red Hat in the `openshift-pipelines` namespace and is not part of this chart.
 
 ### Triggers (if `triggers.enabled: true`)
 
@@ -181,19 +182,20 @@ oc delete secret s3-credentials -n <namespace>
 
 ## Troubleshooting
 
-### ClusterTask Not Found
+### Task Not Found
 
 **Error:**
 ```
-error: clustertask.tekton.dev "git-clone" not found
+error: tasks.tekton.dev "git-clone" not found in namespace openshift-pipelines
 ```
 
 **Solution:**
 
-Set `useClusterTasks: false` or install OpenShift Pipelines operator:
+Install or verify OpenShift Pipelines operator (v1.15+) is installed:
 
 ```bash
-helm upgrade fraud-detection . --set tekton.useClusterTasks=false
+oc get subscription -n openshift-operators openshift-pipelines-operator
+oc get task -n openshift-pipelines | grep git-clone
 ```
 
 ### S3 Connection Failed
@@ -251,7 +253,7 @@ helm lint .
 ## Related Documentation
 
 - [Main README](../README.md) - Project overview
-- [Using ClusterTasks](../docs/notes/using-clustertasks.md) - ClusterTask vs custom tasks
+- [Using Red Hat Tasks](../docs/notes/using-red-hat-tasks.md) - Red Hat provided tasks via cluster resolver
 - [Tekton Triggers Setup](../docs/notes/tekton-triggers-setup.md) - Webhook configuration
 - [Architecture](../docs/architecture.md) - System design
 
