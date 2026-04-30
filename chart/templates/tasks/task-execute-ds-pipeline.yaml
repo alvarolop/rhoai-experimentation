@@ -122,13 +122,27 @@ spec:
             print('Available objects:', [(name, getattr(module, name).__module__) for name in dir(module) if not name.startswith('_') and callable(getattr(module, name)) and hasattr(getattr(module, name), '__module__')])
             sys.exit(1)
 
-        # Create and run pipeline
-        run = client.create_run_from_pipeline_func(
-            pipeline_func,
-            arguments={},
-            experiment_name="$(params.pipeline-name)",
-            namespace=namespace,
-            enable_caching=True
+        # Compile pipeline to YAML
+        from kfp import compiler
+        import tempfile
+
+        pipeline_yaml = tempfile.mktemp(suffix='.yaml')
+        compiler.Compiler().compile(pipeline_func, pipeline_yaml)
+        print(f'Compiled pipeline to {pipeline_yaml}')
+
+        # Create or get experiment
+        try:
+            experiment = client.get_experiment(experiment_name="$(params.pipeline-name)")
+            print(f'Using existing experiment: {experiment.experiment_id}')
+        except:
+            experiment = client.create_experiment("$(params.pipeline-name)")
+            print(f'Created new experiment: {experiment.experiment_id}')
+
+        # Upload and run pipeline
+        run = client.run_pipeline(
+            experiment_id=experiment.experiment_id,
+            job_name="$(params.pipeline-name)-run",
+            pipeline_package_path=pipeline_yaml
         )
 
         print(f'Run ID: {run.run_id}')
