@@ -47,19 +47,23 @@ spec:
         #!/bin/bash
         set -e
 
-        PIPELINE_DIR=$(dirname $(params.pipeline-file))
-        PIPELINE_FILE=$(basename $(params.pipeline-file))
-
-        cd ${PIPELINE_DIR}
+        WORKSPACE_PATH="$(workspaces.source.path)"
+        PIPELINE_FILE="${WORKSPACE_PATH}/$(params.pipeline-file)"
+        PIPELINE_DIR=$(dirname "${PIPELINE_FILE}")
 
         echo "🚀 Executing Data Science Pipeline: $(params.pipeline-name)"
         echo "   Pipeline file: $(params.pipeline-file)"
+        echo "   Absolute path: ${PIPELINE_FILE}"
         echo "   Wait for completion: $(params.wait-for-completion)"
         echo "   Timeout: $(params.timeout)s"
 
-        cat << 'EOF' | python3
+        # Add pipeline directory to PYTHONPATH for component imports
+        export PYTHONPATH="${PIPELINE_DIR}:${PYTHONPATH}"
+
+        cat << EOF | python3
         import kfp
         import sys
+        import os
         import importlib.util
 
         # Read namespace from ServiceAccount
@@ -80,8 +84,19 @@ spec:
         # Create KFP client
         client = kfp.Client(host=dsp_host, existing_token=token, ssl_ca_cert=ssl_ca)
 
-        # Import pipeline module
-        spec = importlib.util.spec_from_file_location("pipeline", "${PIPELINE_FILE}")
+        # Import pipeline module using absolute path
+        pipeline_file = "${PIPELINE_FILE}"
+        print(f'Loading pipeline from: {pipeline_file}')
+
+        if not os.path.exists(pipeline_file):
+            print(f'ERROR: Pipeline file not found: {pipeline_file}')
+            sys.exit(1)
+
+        spec = importlib.util.spec_from_file_location("pipeline", pipeline_file)
+        if spec is None or spec.loader is None:
+            print(f'ERROR: Failed to load pipeline module from {pipeline_file}')
+            sys.exit(1)
+
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
