@@ -130,19 +130,11 @@ spec:
         compiler.Compiler().compile(pipeline_func, pipeline_yaml)
         print(f'Compiled pipeline to {pipeline_yaml}')
 
-        # Create or get experiment
-        try:
-            experiment = client.get_experiment(experiment_name="$(params.pipeline-name)")
-            print(f'Using existing experiment: {experiment.experiment_id}')
-        except:
-            experiment = client.create_experiment("$(params.pipeline-name)")
-            print(f'Created new experiment: {experiment.experiment_id}')
-
-        # Upload and run pipeline
-        run = client.run_pipeline(
-            experiment_id=experiment.experiment_id,
-            job_name="$(params.pipeline-name)-run",
-            pipeline_package_path=pipeline_yaml
+        # Run pipeline directly without experiments (simpler API)
+        run = client.create_run_from_pipeline_package(
+            pipeline_file=pipeline_yaml,
+            arguments={},
+            run_name="$(params.pipeline-name)-run"
         )
 
         print(f'Run ID: {run.run_id}')
