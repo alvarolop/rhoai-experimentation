@@ -2,9 +2,9 @@ from kfp.dsl import component
 
 
 @component(
-    # Official Red Hat UBI9 Python image - certified and supported
-    base_image="registry.access.redhat.com/ubi9/python-312",
-    packages_to_install=["requests==2.32.3"],
+    # Custom image with pre-installed ML libraries for disconnected environments
+    base_image="quay.io/alopezme/rhoai-experimentation-kfp:latest",
+    # packages_to_install=["requests==2.32.3"],  # Pre-installed in custom image
 )
 def validate_pipeline(
     s3_endpoint: str, s3_bucket: str, model_registry_url: str, namespace: str

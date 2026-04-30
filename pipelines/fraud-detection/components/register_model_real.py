@@ -2,8 +2,9 @@ from kfp.dsl import component, Input, Output, Model, Artifact
 
 
 @component(
-    base_image="registry.access.redhat.com/ubi9/python-312",
-    packages_to_install=["requests==2.32.3"],
+    # Custom image with pre-installed ML libraries for disconnected environments
+    base_image="quay.io/alopezme/rhoai-experimentation-kfp:latest",
+    # packages_to_install=["requests==2.32.3"],  # Pre-installed in custom image
 )
 def register_model_real(
     model_input: Input[Model],

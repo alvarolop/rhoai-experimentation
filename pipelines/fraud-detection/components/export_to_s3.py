@@ -2,13 +2,14 @@ from kfp.dsl import component, Input, Output, Model, Artifact
 
 
 @component(
-    base_image="registry.access.redhat.com/ubi9/python-312",
-    packages_to_install=[
-        "scikit-learn==1.7.0",
-        "skl2onnx==1.18.0",
-        "onnx==1.17.0",
-        "boto3==1.37.0",
-    ],
+    # Custom image with pre-installed ML libraries for disconnected environments
+    base_image="quay.io/alopezme/rhoai-experimentation-kfp:latest",
+    # packages_to_install=[
+    #     "scikit-learn==1.7.0",
+    #     "skl2onnx==1.18.0",
+    #     "onnx==1.17.0",
+    #     "boto3==1.37.0",
+    # ],  # Pre-installed in custom image
 )
 def export_to_s3(
     model_input: Input[Model],

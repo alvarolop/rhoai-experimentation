@@ -2,8 +2,9 @@ from kfp.dsl import component, Input, Output, Artifact
 
 
 @component(
-    base_image="registry.access.redhat.com/ubi9/python-312",
-    packages_to_install=["kubernetes==31.0.0"],
+    # Custom image with pre-installed ML libraries for disconnected environments
+    base_image="quay.io/alopezme/rhoai-experimentation-kfp:latest",
+    # packages_to_install=["kubernetes==31.0.0"],  # Pre-installed in custom image
 )
 def deploy_openvino(
     s3_info_input: Input[Artifact],

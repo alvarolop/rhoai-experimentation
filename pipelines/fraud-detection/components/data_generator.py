@@ -4,9 +4,9 @@ import numpy as np
 
 
 @component(
-    # Official Red Hat UBI9 Python image - certified and supported
-    base_image="registry.access.redhat.com/ubi9/python-311",
-    packages_to_install=["pandas==2.2.2", "numpy==1.26.4"],
+    # Custom image with pre-installed ML libraries for disconnected environments
+    base_image="quay.io/alopezme/rhoai-experimentation-kfp:latest",
+    # packages_to_install=["pandas==2.2.2", "numpy==1.26.4"],  # Pre-installed in custom image
 )
 def generate_fraud_data(
     output_data: Output[Dataset], num_samples: int = 10000, fraud_ratio: float = 0.02

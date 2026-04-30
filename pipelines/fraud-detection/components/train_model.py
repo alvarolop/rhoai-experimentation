@@ -2,8 +2,9 @@ from kfp.dsl import component, Input, Output, Dataset, Model, Metrics
 
 
 @component(
-    base_image="registry.access.redhat.com/ubi9/python-312",
-    packages_to_install=["pandas==2.3.0", "scikit-learn==1.7.0", "numpy==2.3.0"],
+    # Custom image with pre-installed ML libraries for disconnected environments
+    base_image="quay.io/alopezme/rhoai-experimentation-kfp:latest",
+    # packages_to_install=["pandas==2.3.0", "scikit-learn==1.7.0", "numpy==2.3.0"],  # Pre-installed in custom image
 )
 def train_fraud_model(
     input_data: Input[Dataset],
