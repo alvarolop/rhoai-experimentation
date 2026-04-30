@@ -101,29 +101,25 @@ spec:
         spec.loader.exec_module(module)
 
         # Find pipeline function (decorated with @dsl.pipeline)
-        # KFP 2.x: pipeline functions have 'component_spec' or 'pipeline_spec' attribute
-        # and are defined in the loaded module (not imported)
+        # KFP 2.x: pipeline functions are wrapped as GraphComponent (module=kfp.dsl.graph_component)
+        # Components are wrapped as PythonComponent (module=kfp.dsl.python_component)
         pipeline_func = None
         for name in dir(module):
             if name.startswith('_'):
                 continue
             obj = getattr(module, name)
-            # Debug: check attributes of each object
-            if callable(obj) and hasattr(obj, '__module__'):
-                print(f'Checking {name}: module={obj.__module__}, attrs={[a for a in dir(obj) if "spec" in a.lower()]}')
 
-            # Check if it's a pipeline function defined in this module
+            # Check if it's a pipeline function (GraphComponent, not PythonComponent)
             if (callable(obj) and
                 hasattr(obj, '__module__') and
-                obj.__module__ == 'pipeline' and
-                (hasattr(obj, 'pipeline_spec') or hasattr(obj, 'component_spec'))):
+                obj.__module__ == 'kfp.dsl.graph_component'):
                 pipeline_func = obj
                 print(f'Found pipeline function: {name}')
                 break
 
         if not pipeline_func:
             print('ERROR: No pipeline function found')
-            print('Available callables:', [(name, getattr(module, name).__module__) for name in dir(module) if not name.startswith('_') and callable(getattr(module, name)) and hasattr(getattr(module, name), '__module__')])
+            print('Available objects:', [(name, getattr(module, name).__module__) for name in dir(module) if not name.startswith('_') and callable(getattr(module, name)) and hasattr(getattr(module, name), '__module__')])
             sys.exit(1)
 
         # Create and run pipeline
