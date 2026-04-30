@@ -50,7 +50,6 @@ Red Hat OpenShift AI 3.3 workbench images include KFP SDK and ML libraries but:
 
 **Tekton CI/CD Tools:**
 - `kfp==2.14.1` - Kubeflow Pipelines SDK (pipeline compilation and execution)
-- `kfp-kubernetes==1.3.0` - Kubernetes integration for KFP
 - `black==24.10.0` - Code formatter
 - `flake8==7.1.1` - Code style checker
 - `pylint==3.3.1` - Python linter

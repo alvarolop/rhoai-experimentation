@@ -23,7 +23,6 @@ RUN dnf install -y --setopt=tsflags=nodocs \
 RUN pip install --no-cache-dir \
     # Kubeflow Pipelines SDK (for Tekton pipeline compilation and execution)
     kfp==2.14.1 \
-    kfp-kubernetes==1.3.0 \
     # Code quality and linting tools (for Tekton lint task)
     black==24.10.0 \
     flake8==7.1.1 \
