@@ -1,6 +1,4 @@
 from kfp.dsl import component, Output, Dataset
-import pandas as pd
-import numpy as np
 
 
 @component(
@@ -11,6 +9,9 @@ import numpy as np
 def generate_fraud_data(
     output_data: Output[Dataset], num_samples: int = 10000, fraud_ratio: float = 0.02
 ):
+    import pandas as pd
+    import numpy as np
+
     np.random.seed(42)
 
     num_fraud = int(num_samples * fraud_ratio)
