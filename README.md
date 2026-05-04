@@ -127,7 +127,9 @@ oc logs -f -n <your-namespace> -l tekton.dev/pipelineRun=fraud-detection-run
 
 ### High-Level Overview
 
-![Pipeline Architecture](docs/pipeline-architecture-improved.png)
+![Pipeline Architecture](docs/pipeline-architecture-final.png)
+
+**Clear Left-to-Right Flow:** Developer pushes code → Git repository → Webhook triggers EventListener → Quality gates validate code → Execute pipeline task compiles and runs → ML workflow executes 7 components → Model deployed to serving platform. External services (Model Registry, S3 Storage, Model Serving) are connected via dashed lines below.
 
 **2-Tier Architecture:**
 

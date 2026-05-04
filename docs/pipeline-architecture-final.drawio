@@ -1,0 +1,102 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="pipeline-arch" name="Pipeline Architecture">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Developer Actor -->
+        <mxCell id="2" value="Developer" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;html=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="35" y="100" width="30" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Git Repository -->
+        <mxCell id="3" value="Git&#xa;Repository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4472c4;strokeWidth=2;fontSize=12;dashed=1;dashPattern=8 8;" vertex="1" parent="1">
+          <mxGeometry x="100" y="100" width="120" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Main System Container -->
+        <mxCell id="4" value="OpenShift AI Pipeline System (Internal)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#ee0000;strokeWidth=3;fillColor=#fff5f5;fontStyle=1;fontSize=14;align=left;verticalAlign=top;spacingTop=5;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="200" width="1020" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 1: EventListener -->
+        <mxCell id="5" value="1. EventListener" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f9ff;strokeColor=#4472c4;strokeWidth=2;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="110" y="250" width="130" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 2: Quality Gates -->
+        <mxCell id="6" value="2. Quality&#xa;Gates" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#70ad47;strokeWidth=2;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="270" y="250" width="130" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 3: Execute Pipeline -->
+        <mxCell id="7" value="3. Execute&#xa;Pipeline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3cd;strokeColor=#ffa500;strokeWidth=3;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="250" width="130" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 4: ML Workflow -->
+        <mxCell id="8" value="4. ML Workflow&#xa;7 Components" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5ff;strokeColor=#7f7fff;strokeWidth=2;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="250" width="140" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 5: Deploy -->
+        <mxCell id="9" value="5. Deploy&#xa;Model" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#70ad47;strokeWidth=2;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="250" width="120" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- External Services Row -->
+        <mxCell id="16" value="Model Registry&#xa;(External)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#70ad47;strokeWidth=2;fontSize=11;dashed=1;dashPattern=8 8;" vertex="1" parent="1">
+          <mxGeometry x="590" y="400" width="100" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="17" value="S3 Storage&#xa;(External)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#7f7f7f;strokeWidth=2;fontSize=11;dashed=1;dashPattern=8 8;" vertex="1" parent="1">
+          <mxGeometry x="710" y="400" width="100" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="18" value="Model Serving&#xa;(External)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ee0000;strokeWidth=2;fontSize=11;dashed=1;dashPattern=8 8;" vertex="1" parent="1">
+          <mxGeometry x="830" y="400" width="100" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Horizontal Flow Arrows -->
+        <mxCell id="10" value="Push" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#4472c4;fontSize=10;fontStyle=1;" edge="1" parent="1" source="2" target="3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="11" value="Webhook" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#4472c4;fontSize=10;fontStyle=1;" edge="1" parent="1" source="3" target="5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=4;strokeColor=#666666;" edge="1" parent="1" source="5" target="6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=4;strokeColor=#666666;" edge="1" parent="1" source="6" target="7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="14" value="Compile&#xa;&amp; Run" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=5;strokeColor=#ffa500;fontSize=11;fontStyle=1;" edge="1" parent="1" source="7" target="8">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=4;strokeColor=#666666;" edge="1" parent="1" source="8" target="9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Downward Output Connections -->
+        <mxCell id="19" value="Register" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#70ad47;dashed=1;fontSize=10;" edge="1" parent="1" source="8" target="16">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="20" value="Export" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7f7f7f;dashed=1;fontSize=10;" edge="1" parent="1" source="8" target="17">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="21" value="Deploy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#ee0000;dashed=1;fontSize=10;" edge="1" parent="1" source="9" target="18">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
