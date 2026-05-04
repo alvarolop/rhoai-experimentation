@@ -138,21 +138,22 @@ spec:
 
         # Wait if requested
         if "$(params.wait-for-completion)" == "true":
-            print('🥱 Waiting for completion...')
+            print('Waiting for completion...')
             client.wait_for_run_completion(
                 run_id=run_result.run_id,
                 timeout=int("$(params.timeout)"),
                 sleep_duration=5
             )
             run_details = client.get_run(run_result.run_id)
-            status = run_details.run.status if hasattr(run_details.run, 'status') else 'Unknown'
-            print(f'✅ Status: {status}')
+            # KFP 2.15.2 API: run_details is V2beta1Run, status is in state attribute
+            status = run_details.state if hasattr(run_details, 'state') else 'Unknown'
+            print(f'Status: {status}')
             with open('$(results.status.path)', 'w') as f:
-                f.write(status)
-            if status != 'SUCCEEDED' and status != 'Succeeded':
-                print('❌ Pipeline failed')
+                f.write(str(status))
+            if status != 'SUCCEEDED' and str(status) != 'State.SUCCEEDED':
+                print('Pipeline execution did not succeed')
                 sys.exit(1)
-            print('🎉 Pipeline completed successfully!')
+            print('Pipeline completed successfully!')
         else:
             with open('$(results.status.path)', 'w') as f:
                 f.write('Running')
