@@ -22,14 +22,14 @@ def fraud_detection_pipeline(
     # Model registration
     model_name: str = "fraud-detector",
     model_version: str = "v1",
-    model_registry_url: str = "http://model-registry-service:8080",
+    model_registry_url: str = "http://local.rhoai-model-registries.svc.cluster.local:8080",
     # S3 configuration
-    s3_endpoint: str = "minio-service.rhoai-pipelines-demo.svc.cluster.local:9000",
+    s3_endpoint: str = "minio.minio.svc.cluster.local:9000",
     s3_bucket: str = "models",
     s3_access_key: str = "minio",
     s3_secret_key: str = "minio123",
     # Deployment
-    namespace: str = "rhoai-pipelines-demo",
+    namespace: str = "rhoai-playground",
     # Monitoring
     enable_trustyai: bool = True,
 ):
