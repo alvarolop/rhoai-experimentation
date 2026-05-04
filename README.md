@@ -125,30 +125,56 @@ oc logs -f -n <your-namespace> -l tekton.dev/pipelineRun=fraud-detection-run
 
 ## Architecture
 
-```
-┌─────────────┐
-│   Tekton    │  Lints → Compiles → Uploads → Triggers
-│  Pipeline   │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────────────────────────────────────────┐
-│          Kubeflow Pipeline (Data Science Pipelines)     │
-│                                                           │
-│  1. Generate Data → 2. Train Model → 3. Register Model  │
-│         ↓                                                 │
-│  4. Deploy Model → 5. Benchmark                          │
-└──────────────┬──────────────────────────────────────────┘
-               │
-      ┌────────┴────────┐
-      ▼                 ▼
-┌──────────┐      ┌──────────┐
-│  Model   │      │  KServe  │
-│ Registry │      │Inference │
-└──────────┘      └──────────┘
-```
+### High-Level Overview
 
-See [docs/architecture.md](docs/architecture.md) for detailed flow.
+![Pipeline Architecture](docs/pipeline-architecture-20260505-011500.png)
+
+**2-Tier Architecture:**
+
+- **Tier 1: Tekton CI/CD Layer** - Orchestrates code quality, testing, and deployment
+- **Tier 2: KFP Data Science Pipeline Layer** - Executes ML training and model deployment
+
+### Pipeline Lifecycle & Versioning
+
+This implementation follows the **runtime compilation pattern** used in production RHOAI environments:
+
+#### Key Design Decisions
+
+✅ **Runtime Compilation** - Pipelines are compiled from source code on-demand, not pre-uploaded to DSP  
+✅ **Git as Source of Truth** - Pipeline definitions live in Git, ensuring version control and traceability  
+✅ **Commit-Based Versioning** - Each run is tagged with Git commit hash (e.g., `v1.0-a3c2f91`)  
+✅ **No Pipeline Cleanup Needed** - DSP doesn't store pipeline definitions, only run history  
+
+#### Execution Workflow
+
+![Pipeline Execution Flow](docs/pipeline-execution-flow-20260505-011500.png)
+
+**Complete workflow from Git push to production:**
+
+1. **Git Push** → Developer pushes code to main branch
+2. **Webhook Trigger** → EventListener receives webhook, creates PipelineRun
+3. **Quality Gates** → Linting, unit tests, static analysis, feature validation (parallel)
+4. **Execute DS Pipeline** → Imports `pipeline.py`, injects Git commit hash, calls `create_run_from_pipeline_func()`
+5. **Post-Processing** → Model scanning, container build, image signing, SBOM generation
+6. **Deployment** → Deploy to test environment, update GitOps repository
+7. **Model Registry Update** → Mark new version as `deployed=test`, clear label from old versions
+8. **Production PR** → Automated pull request for production deployment approval
+
+#### Versioning Strategy
+
+**Three levels of versioning:**
+
+1. **Code Version** (Git) - Git commit hash tracks source code changes
+2. **Pipeline Run Version** (KFP) - Each execution gets unique run ID in DSP
+3. **Model Version** (Model Registry) - Tagged with commit hash, only latest marked as deployed
+
+**Managing Old Versions:**
+
+- **Pipeline definitions**: Not stored in DSP, no cleanup needed
+- **Pipeline runs**: Naturally expire based on DSP retention policies
+- **Model versions**: Only current version has `deployment_environment` label, old versions kept for history
+
+See [docs/architecture.md](docs/architecture.md) for detailed component interactions.
 
 ## Repository Structure
 

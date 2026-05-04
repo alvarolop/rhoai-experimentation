@@ -1,0 +1,179 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="execution-flow" name="Pipeline Execution Flow">
+    <mxGraphModel dx="1422" dy="1000" grid="1" gridSize="10" guides="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="2" value="Pipeline Execution Workflow (Git Push to Production)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="500" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- 1. Git Push -->
+        <mxCell id="3" value="1. Git Push" style="swimlane;whiteSpace=wrap;html=1;rounded=1;strokeColor=#4472c4;strokeWidth=2;fillColor=#f5f9ff;fontStyle=1;fontSize=12;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="80" y="70" width="200" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="4" value="Developer pushes&#xa;code to main branch" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#cccccc;fontSize=10;" vertex="1" parent="3">
+          <mxGeometry x="20" y="40" width="160" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- 2. Webhook Trigger -->
+        <mxCell id="5" value="2. Webhook Trigger" style="swimlane;whiteSpace=wrap;html=1;rounded=1;strokeColor=#4472c4;strokeWidth=2;fillColor=#f5f9ff;fontStyle=1;fontSize=12;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="320" y="70" width="240" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="6" value="EventListener receives&#xa;webhook, creates PipelineRun" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#cccccc;fontSize=10;" vertex="1" parent="5">
+          <mxGeometry x="20" y="40" width="200" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- 3. Quality Gates -->
+        <mxCell id="7" value="3. Quality Gates" style="swimlane;whiteSpace=wrap;html=1;rounded=1;strokeColor=#70ad47;strokeWidth=2;fillColor=#e8f5e9;fontStyle=1;fontSize=12;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="80" y="210" width="480" height="150" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="8" value="Linting&#xa;(Black, flake8)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#70ad47;fontSize=10;" vertex="1" parent="7">
+          <mxGeometry x="20" y="50" width="100" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="9" value="Unit Tests&#xa;(pytest)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#70ad47;fontSize=10;" vertex="1" parent="7">
+          <mxGeometry x="140" y="50" width="100" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="10" value="Static Analysis&#xa;(SonarQube)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#70ad47;fontSize=10;" vertex="1" parent="7">
+          <mxGeometry x="260" y="50" width="100" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="11" value="Feature&#xa;Validation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#70ad47;fontSize=10;" vertex="1" parent="7">
+          <mxGeometry x="380" y="50" width="80" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- 4. Execute DS Pipeline -->
+        <mxCell id="12" value="4. Execute DS Pipeline (KFP)" style="swimlane;whiteSpace=wrap;html=1;rounded=1;strokeColor=#ffa500;strokeWidth=2;fillColor=#fff3cd;fontStyle=1;fontSize=12;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="80" y="400" width="480" height="180" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="13" value="Import pipeline.py&#xa;from Git repo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ffa500;fontSize=10;" vertex="1" parent="12">
+          <mxGeometry x="20" y="40" width="120" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="14" value="Inject parameters&#xa;(commit hash, version)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ffa500;fontSize=10;" vertex="1" parent="12">
+          <mxGeometry x="160" y="40" width="140" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="15" value="create_run_from&#xa;_pipeline_func()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ffa500;fontSize=10;fontStyle=1;" vertex="1" parent="12">
+          <mxGeometry x="320" y="40" width="140" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="16" value="ML Pipeline Executes:&#xa;Validate → Generate Data → Train → Register → Export → Deploy → Monitor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5ff;strokeColor=#7f7fff;fontSize=10;" vertex="1" parent="12">
+          <mxGeometry x="20" y="110" width="440" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#ffa500;" edge="1" parent="12" source="13" target="14">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#ffa500;" edge="1" parent="12" source="14" target="15">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- 5. Post-Processing -->
+        <mxCell id="19" value="5. Post-Processing" style="swimlane;whiteSpace=wrap;html=1;rounded=1;strokeColor=#70ad47;strokeWidth=2;fillColor=#e8f5e9;fontStyle=1;fontSize=12;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="80" y="620" width="480" height="130" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="20" value="Model Scan&#xa;(Security)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#70ad47;fontSize=10;" vertex="1" parent="19">
+          <mxGeometry x="20" y="50" width="100" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="21" value="Build Modelcar&#xa;Container" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#70ad47;fontSize=10;" vertex="1" parent="19">
+          <mxGeometry x="140" y="50" width="100" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="22" value="Image Scan&#xa;&amp; Sign" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#70ad47;fontSize=10;" vertex="1" parent="19">
+          <mxGeometry x="260" y="50" width="100" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="23" value="Generate&#xa;SBOM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#70ad47;fontSize=10;" vertex="1" parent="19">
+          <mxGeometry x="380" y="50" width="80" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- 6. Deployment -->
+        <mxCell id="24" value="6. Deployment to Test" style="swimlane;whiteSpace=wrap;html=1;rounded=1;strokeColor=#ee0000;strokeWidth=2;fillColor=#fff5f5;fontStyle=1;fontSize=12;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="80" y="790" width="480" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="25" value="Deploy model to test environment&#xa;Update GitOps repository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#cccccc;fontSize=10;" vertex="1" parent="24">
+          <mxGeometry x="140" y="40" width="200" height="45" as="geometry"/>
+        </mxCell>
+
+        <!-- 7. Metadata Update -->
+        <mxCell id="26" value="7. Model Registry Update" style="swimlane;whiteSpace=wrap;html=1;rounded=1;strokeColor=#7f7f7f;strokeWidth=2;fillColor=#f5f5f5;fontStyle=1;fontSize=12;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="80" y="930" width="240" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="27" value="✓ Set deployment=test&#xa;  on NEW version&#xa;&#xa;✗ Clear deployment label&#xa;  from OLD versions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#cccccc;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="26">
+          <mxGeometry x="20" y="40" width="200" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- 8. Production PR -->
+        <mxCell id="28" value="8. Production Promotion" style="swimlane;whiteSpace=wrap;html=1;rounded=1;strokeColor=#4472c4;strokeWidth=2;fillColor=#f5f9ff;fontStyle=1;fontSize=12;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="360" y="930" width="200" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="29" value="Create Pull Request&#xa;for production&#xa;deployment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#cccccc;fontSize=10;" vertex="1" parent="28">
+          <mxGeometry x="20" y="40" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Flow Arrows -->
+        <mxCell id="30" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="4" target="6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="31" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="6" target="7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="32" value="All Pass" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#70ad47;fontSize=11;fontStyle=1;" edge="1" parent="1" source="7" target="12">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="33" value="KFP_RUN_ID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#ffa500;fontSize=11;fontStyle=1;" edge="1" parent="1" source="15" target="19">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="34" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="19" target="24">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="35" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="24" target="26">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="36" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#666666;" edge="1" parent="1" source="24" target="28">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Key Insight Box -->
+        <mxCell id="37" value="Key Insight: Pipeline Versioning" style="swimlane;whiteSpace=wrap;html=1;rounded=1;strokeColor=#666666;strokeWidth=2;fillColor=#ffffcc;fontStyle=1;fontSize=11;startSize=25;" vertex="1" parent="1">
+          <mxGeometry x="620" y="70" width="280" height="190" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="38" value="✓ Runtime Compilation&#xa;  (not pre-uploaded)&#xa;&#xa;✓ Git = Source of Truth&#xa;  (pipeline in code)&#xa;&#xa;✓ Version = Git Commit Hash&#xa;  (e.g., v1.0-a3c2f91)&#xa;&#xa;✗ No DSP cleanup needed&#xa;  (no stored pipelines)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#cccccc;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="37">
+          <mxGeometry x="10" y="35" width="260" height="145" as="geometry"/>
+        </mxCell>
+
+        <!-- Versioning Strategy -->
+        <mxCell id="39" value="Versioning Strategy" style="swimlane;whiteSpace=wrap;html=1;rounded=1;strokeColor=#666666;strokeWidth=2;fillColor=#e8e8ff;fontStyle=1;fontSize=11;startSize=25;" vertex="1" parent="1">
+          <mxGeometry x="620" y="290" width="280" height="160" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="40" value="1. Code Version (Git)&#xa;   └─ Commit hash&#xa;&#xa;2. Pipeline Run (KFP)&#xa;   └─ Unique run ID&#xa;&#xa;3. Model Version (Registry)&#xa;   └─ Git commit tag" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#cccccc;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="39">
+          <mxGeometry x="10" y="35" width="260" height="115" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
