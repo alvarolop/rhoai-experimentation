@@ -122,61 +122,37 @@ spec:
             print('Available objects:', [(name, getattr(module, name).__module__) for name in dir(module) if not name.startswith('_') and callable(getattr(module, name)) and hasattr(getattr(module, name), '__module__')])
             sys.exit(1)
 
-        # Compile pipeline to YAML
-        from kfp import compiler
-        import tempfile
-        import time
-
-        pipeline_yaml = tempfile.mktemp(suffix='.yaml')
-        compiler.Compiler().compile(pipeline_func, pipeline_yaml)
-        print(f'Compiled pipeline to {pipeline_yaml}')
-
-        # Upload pipeline version to DSP server
-        pipeline_name = "$(params.pipeline-name)"
-        pipeline_version_name = f'v{int(time.time())}'
-
-        try:
-            # Try to get existing pipeline
-            pipeline_id = client.get_pipeline_id(pipeline_name)
-            print(f'Found existing pipeline: {pipeline_id}')
-            # Upload as new version of existing pipeline
-            pipeline_version = client.upload_pipeline_version(
-                pipeline_package_path=pipeline_yaml,
-                pipeline_version_name=pipeline_version_name,
-                pipeline_id=pipeline_id
-            )
-        except:
-            # Pipeline doesn't exist, create it with first version
-            print(f'Pipeline does not exist, creating new pipeline')
-            pipeline_version = client.upload_pipeline_version(
-                pipeline_package_path=pipeline_yaml,
-                pipeline_version_name=pipeline_version_name,
-                pipeline_name=pipeline_name
-            )
-
-        print(f'Uploaded pipeline version: {pipeline_version.pipeline_version_id}')
-
-        # Create a run from the uploaded version
-        run = client.run_pipeline(
-            experiment_id=None,  # No experiment needed for KFP v2
-            job_name=f'{pipeline_name}-run',
-            version_id=pipeline_version.pipeline_version_id
+        # Start a run directly from pipeline function (uploads and runs in one step)
+        print('🏃 Starting pipeline run')
+        run_result = client.create_run_from_pipeline_func(
+            pipeline_func,
+            arguments={},
+            experiment_name="$(params.pipeline-name)",
+            namespace=namespace,
+            enable_caching=True
         )
 
-        print(f'Run ID: {run.run_id}')
+        print(f'Run ID: {run_result.run_id}')
         with open('$(results.run-id.path)', 'w') as f:
-            f.write(run.run_id)
+            f.write(run_result.run_id)
 
         # Wait if requested
         if "$(params.wait-for-completion)" == "true":
-            print('Waiting for completion...')
-            client.wait_for_run_completion(run.run_id, timeout=int("$(params.timeout)"))
-            status = client.get_run(run.run_id).run.status
-            print(f'Status: {status}')
+            print('🥱 Waiting for completion...')
+            client.wait_for_run_completion(
+                run_id=run_result.run_id,
+                timeout=int("$(params.timeout)"),
+                sleep_duration=5
+            )
+            run_details = client.get_run(run_result.run_id)
+            status = run_details.run.status if hasattr(run_details.run, 'status') else 'Unknown'
+            print(f'✅ Status: {status}')
             with open('$(results.status.path)', 'w') as f:
                 f.write(status)
-            if status != 'Succeeded':
+            if status != 'SUCCEEDED' and status != 'Succeeded':
+                print('❌ Pipeline failed')
                 sys.exit(1)
+            print('🎉 Pipeline completed successfully!')
         else:
             with open('$(results.status.path)', 'w') as f:
                 f.write('Running')
