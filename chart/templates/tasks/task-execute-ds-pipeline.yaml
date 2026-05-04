@@ -125,16 +125,39 @@ spec:
         # Compile pipeline to YAML
         from kfp import compiler
         import tempfile
+        import time
 
         pipeline_yaml = tempfile.mktemp(suffix='.yaml')
         compiler.Compiler().compile(pipeline_func, pipeline_yaml)
         print(f'Compiled pipeline to {pipeline_yaml}')
 
-        # Run pipeline directly without experiments (simpler API)
-        run = client.create_run_from_pipeline_package(
-            pipeline_file=pipeline_yaml,
-            arguments={},
-            run_name="$(params.pipeline-name)-run"
+        # Upload pipeline version to DSP server
+        pipeline_name = "$(params.pipeline-name)"
+        pipeline_version_name = f'v{int(time.time())}'
+
+        try:
+            # Try to get existing pipeline
+            pipeline_id = client.get_pipeline_id(pipeline_name)
+            print(f'Found existing pipeline: {pipeline_id}')
+        except:
+            # Pipeline doesn't exist, upload will create it
+            pipeline_id = None
+            print(f'Pipeline does not exist, will be created')
+
+        # Upload pipeline version (creates pipeline if needed)
+        pipeline_version = client.upload_pipeline_version(
+            pipeline_package_path=pipeline_yaml,
+            pipeline_version_name=pipeline_version_name,
+            pipeline_name=pipeline_name if not pipeline_id else None,
+            pipeline_id=pipeline_id
+        )
+        print(f'Uploaded pipeline version: {pipeline_version.pipeline_version_id}')
+
+        # Create a run from the uploaded version
+        run = client.run_pipeline(
+            experiment_id=None,  # No experiment needed for KFP v2
+            job_name=f'{pipeline_name}-run',
+            version_id=pipeline_version.pipeline_version_id
         )
 
         print(f'Run ID: {run.run_id}')
