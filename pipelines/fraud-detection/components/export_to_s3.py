@@ -30,6 +30,7 @@ def export_to_s3(
     import json
     import boto3
     from skl2onnx import to_onnx
+    from skl2onnx.common.data_types import FloatTensorType
     import numpy as np
 
     print("=" * 60)
@@ -49,7 +50,7 @@ def export_to_s3(
     n_features = metadata.get("n_features", 8)
 
     # Create dummy input for ONNX conversion
-    initial_type = [("input", "float", [None, n_features])]
+    initial_type = [("input", FloatTensorType([None, n_features]))]
 
     try:
         onnx_model = to_onnx(sklearn_model, initial_types=initial_type, target_opset=15)
