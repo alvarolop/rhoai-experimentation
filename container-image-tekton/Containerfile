@@ -22,7 +22,8 @@ RUN dnf install -y --setopt=tsflags=nodocs \
 # Tekton CI/CD tools
 RUN pip install --no-cache-dir \
     # Kubeflow Pipelines SDK (for Tekton pipeline compilation and execution)
-    kfp==2.14.1 \
+    # Version 2.15.2 required for RHOAI 3.3 compatibility
+    kfp==2.15.2 \
     # Code quality and linting tools (for Tekton lint task)
     black==24.10.0 \
     flake8==7.1.1 \
