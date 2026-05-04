@@ -30,7 +30,7 @@ spec:
       description: Timeout in seconds for pipeline execution
       default: "7200"
   workspaces:
-    - name: source
+    - name: output
       description: Workspace containing the pipeline source code
   results:
     - name: run-id
@@ -42,12 +42,12 @@ spec:
       # Custom builder image with pre-installed KFP SDK
       # No pip install needed - optimized for disconnected environments
       image: {{ .Values.tekton.image }}
-      workingDir: $(workspaces.source.path)
+      workingDir: $(workspaces.output.path)
       script: |
         #!/bin/bash
         set -e
 
-        WORKSPACE_PATH="$(workspaces.source.path)"
+        WORKSPACE_PATH="$(workspaces.output.path)"
         PIPELINE_FILE="${WORKSPACE_PATH}/$(params.pipeline-file)"
         PIPELINE_DIR=$(dirname "${PIPELINE_FILE}")
 

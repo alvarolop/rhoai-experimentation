@@ -14,13 +14,13 @@ spec:
       description: Path to lint (file or directory)
       default: "."
   workspaces:
-    - name: source
+    - name: output
   steps:
     - name: lint
       # Custom builder image with pre-installed linting tools
       # No pip install needed - optimized for disconnected environments
       image: {{ .Values.tekton.image }}
-      workingDir: $(workspaces.source.path)/$(params.path)
+      workingDir: $(workspaces.output.path)/$(params.path)
       script: |
         #!/bin/bash
         set -e
