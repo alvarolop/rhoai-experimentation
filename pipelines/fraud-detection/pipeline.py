@@ -70,7 +70,9 @@ def fraud_detection_pipeline(
     # Step 4: Register model in Model Registry
     register_task = register_model_real(
         model_input=train_task.outputs["model_output"],
-        model_metadata=train_task.outputs["Output"],  # Return value from train_fraud_model
+        model_metadata=train_task.outputs[
+            "Output"
+        ],  # Return value from train_fraud_model
         model_registry_url=model_registry_url,
         model_name=model_name,
         model_version=model_version,
@@ -79,7 +81,9 @@ def fraud_detection_pipeline(
     # Step 5: Export to ONNX and upload to S3
     export_task = export_to_s3(
         model_input=train_task.outputs["model_output"],
-        model_metadata=train_task.outputs["Output"],  # Return value from train_fraud_model
+        model_metadata=train_task.outputs[
+            "Output"
+        ],  # Return value from train_fraud_model
         s3_endpoint=s3_endpoint,
         s3_bucket=s3_bucket,
         s3_access_key=s3_access_key,
