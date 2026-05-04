@@ -127,7 +127,7 @@ oc logs -f -n <your-namespace> -l tekton.dev/pipelineRun=fraud-detection-run
 
 ### High-Level Overview
 
-![Pipeline Architecture](docs/pipeline-architecture-20260505-011500.png)
+![Pipeline Architecture](docs/pipeline-architecture-improved.png)
 
 **2-Tier Architecture:**
 
