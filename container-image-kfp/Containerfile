@@ -16,12 +16,12 @@ USER 0
 # Core ML and data science stack
 RUN pip install --no-cache-dir \
     # ML training and inference
-    scikit-learn==1.7.0 \
-    pandas==2.3.0 \
-    numpy==2.3.0 \
+    scikit-learn==1.5.2 \
+    pandas==2.2.2 \
+    numpy==1.26.4 \
     # ONNX model conversion and export
-    skl2onnx==1.18.0 \
-    onnx==1.17.0 \
+    skl2onnx==1.17.0 \
+    onnx==1.16.0 \
     # Cloud storage client (S3/MinIO)
     boto3==1.37.0 \
     # Kubernetes API client
