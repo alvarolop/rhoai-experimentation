@@ -139,18 +139,21 @@ spec:
             # Try to get existing pipeline
             pipeline_id = client.get_pipeline_id(pipeline_name)
             print(f'Found existing pipeline: {pipeline_id}')
+            # Upload as new version of existing pipeline
+            pipeline_version = client.upload_pipeline_version(
+                pipeline_package_path=pipeline_yaml,
+                pipeline_version_name=pipeline_version_name,
+                pipeline_id=pipeline_id
+            )
         except:
-            # Pipeline doesn't exist, upload will create it
-            pipeline_id = None
-            print(f'Pipeline does not exist, will be created')
+            # Pipeline doesn't exist, create it with first version
+            print(f'Pipeline does not exist, creating new pipeline')
+            pipeline_version = client.upload_pipeline_version(
+                pipeline_package_path=pipeline_yaml,
+                pipeline_version_name=pipeline_version_name,
+                pipeline_name=pipeline_name
+            )
 
-        # Upload pipeline version (creates pipeline if needed)
-        pipeline_version = client.upload_pipeline_version(
-            pipeline_package_path=pipeline_yaml,
-            pipeline_version_name=pipeline_version_name,
-            pipeline_name=pipeline_name if not pipeline_id else None,
-            pipeline_id=pipeline_id
-        )
         print(f'Uploaded pipeline version: {pipeline_version.pipeline_version_id}')
 
         # Create a run from the uploaded version
