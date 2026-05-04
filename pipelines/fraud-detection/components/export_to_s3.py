@@ -99,7 +99,7 @@ def export_to_s3(
     except Exception as e:
         print(f"  ERROR S3 upload failed: {e}")
         s3_uri = f"local://{onnx_path}"
-        print(f"  ⚠️  Using local path instead")
+        print(f"  WARNING  Using local path instead")
 
     # Save S3 info
     s3_info = {

@@ -30,7 +30,7 @@ def validate_pipeline(
         if response.status_code == 200:
             print(f"  OK S3 endpoint reachable")
         else:
-            print(f"  ⚠️  S3 endpoint returned {response.status_code}")
+            print(f"  WARNING  S3 endpoint returned {response.status_code}")
     except Exception as e:
         errors.append(f"S3 endpoint unreachable: {e}")
         print(f"  ERROR S3 endpoint unreachable: {e}")
@@ -45,7 +45,7 @@ def validate_pipeline(
         if response.status_code == 200:
             print(f"  OK Model Registry accessible")
         else:
-            print(f"  ⚠️  Model Registry returned {response.status_code}")
+            print(f"  WARNING  Model Registry returned {response.status_code}")
     except Exception as e:
         errors.append(f"Model Registry unreachable: {e}")
         print(f"  ERROR Model Registry unreachable: {e}")
@@ -57,9 +57,9 @@ def validate_pipeline(
             current_ns = f.read().strip()
         print(f"  OK Running in namespace: {current_ns}")
         if current_ns != namespace:
-            print(f"  ⚠️  Warning: Expected {namespace}, running in {current_ns}")
+            print(f"  WARNING  Warning: Expected {namespace}, running in {current_ns}")
     except Exception as e:
-        print(f"  ⚠️  Could not verify namespace: {e}")
+        print(f"  WARNING  Could not verify namespace: {e}")
 
     # Summary
     print("\n" + "=" * 60)

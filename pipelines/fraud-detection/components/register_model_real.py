@@ -78,7 +78,7 @@ def register_model_real(
 
     except Exception as e:
         print(f"  ERROR Model Registry error: {e}")
-        print(f"  ⚠️  Continuing with local registration...")
+        print(f"  WARNING  Continuing with local registration...")
         registered_model_id = f"local-{model_name}"
 
     # Create ModelVersion
@@ -111,7 +111,7 @@ def register_model_real(
             model_version_id = model_version_obj["id"]
             print(f"  OK Created ModelVersion: {model_version_id}")
         else:
-            print(f"  ⚠️  ModelVersion creation returned {response.status_code}")
+            print(f"  WARNING  ModelVersion creation returned {response.status_code}")
             model_version_id = f"local-{model_version}"
 
     except Exception as e:

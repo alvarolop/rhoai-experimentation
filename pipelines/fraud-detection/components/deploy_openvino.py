@@ -122,7 +122,7 @@ def deploy_openvino(
 
     except Exception as e:
         print(f"  ERROR Deployment failed: {e}")
-        print(f"  ⚠️  Creating deployment manifest only...")
+        print(f"  WARNING  Creating deployment manifest only...")
         predictor_url = f"http://{isvc_name}-predictor.{namespace}.svc.cluster.local/v2/models/{isvc_name}/infer"
 
     # Save deployment info

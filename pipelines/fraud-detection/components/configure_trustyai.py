@@ -28,7 +28,7 @@ def configure_trustyai(
     print(f"\nOK Model: {isvc_name}")
 
     if not enable_metrics:
-        print("  ⚠️  Metrics disabled, skipping TrustyAI configuration")
+        print("  WARNING  Metrics disabled, skipping TrustyAI configuration")
         return "disabled"
 
     try:
@@ -134,7 +134,7 @@ def configure_trustyai(
             if e.status == 409:
                 print(f"  OK InferenceServiceMonitor '{monitor_name}' already exists")
             else:
-                print(f"  ⚠️  Monitor creation returned {e.status}: {e.reason}")
+                print(f"  WARNING  Monitor creation returned {e.status}: {e.reason}")
 
         # Get TrustyAI service endpoint
         trustyai_url = f"http://trustyai-service.{namespace}.svc.cluster.local"
@@ -143,7 +143,7 @@ def configure_trustyai(
 
     except Exception as e:
         print(f"  ERROR TrustyAI configuration failed: {e}")
-        print(f"  ⚠️  Model deployed without monitoring")
+        print(f"  WARNING  Model deployed without monitoring")
         return "failed"
 
     print("=" * 60)
