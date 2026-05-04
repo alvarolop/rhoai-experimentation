@@ -29,14 +29,14 @@ def deploy_openvino(
         s3_info = json.load(f)
 
     s3_uri = s3_info["s3_uri"]
-    print(f"\n✓ Model location: {s3_uri}")
+    print(f"\nOK Model location: {s3_uri}")
 
     # Generate InferenceService name (DNS-1123 compliant)
     isvc_name = f"{model_name}-{model_version}".replace("_", "-").lower()
     if len(isvc_name) > 63:
         isvc_name = isvc_name[:63].rstrip("-")
 
-    print(f"✓ InferenceService name: {isvc_name}")
+    print(f"OK InferenceService name: {isvc_name}")
 
     # Create InferenceService manifest
     inference_service = {
@@ -72,7 +72,7 @@ def deploy_openvino(
         },
     }
 
-    print(f"\n✓ Creating InferenceService...")
+    print(f"\nOK Creating InferenceService...")
 
     try:
         # Load in-cluster config
@@ -90,7 +90,7 @@ def deploy_openvino(
                 plural="inferenceservices",
                 name=isvc_name,
             )
-            print(f"  ✓ InferenceService '{isvc_name}' already exists, updating...")
+            print(f"  OK InferenceService '{isvc_name}' already exists, updating...")
 
             # Update existing
             api.patch_namespaced_custom_object(
@@ -101,7 +101,7 @@ def deploy_openvino(
                 name=isvc_name,
                 body=inference_service,
             )
-            print(f"  ✅ Updated InferenceService '{isvc_name}'")
+            print(f"  OK Updated InferenceService '{isvc_name}'")
 
         except client.exceptions.ApiException as e:
             if e.status == 404:
@@ -113,7 +113,7 @@ def deploy_openvino(
                     plural="inferenceservices",
                     body=inference_service,
                 )
-                print(f"  ✅ Created InferenceService '{isvc_name}'")
+                print(f"  OK Created InferenceService '{isvc_name}'")
             else:
                 raise
 
@@ -121,7 +121,7 @@ def deploy_openvino(
         predictor_url = f"http://{isvc_name}-predictor.{namespace}.svc.cluster.local/v2/models/{isvc_name}/infer"
 
     except Exception as e:
-        print(f"  ❌ Deployment failed: {e}")
+        print(f"  ERROR Deployment failed: {e}")
         print(f"  ⚠️  Creating deployment manifest only...")
         predictor_url = f"http://{isvc_name}-predictor.{namespace}.svc.cluster.local/v2/models/{isvc_name}/infer"
 
@@ -140,8 +140,8 @@ def deploy_openvino(
     with open(deployment_output.path, "w") as f:
         json.dump(deployment_info, f, indent=2)
 
-    print(f"\n✓ Deployment info saved")
-    print(f"✓ Predictor URL: {predictor_url}")
+    print(f"\nOK Deployment info saved")
+    print(f"OK Predictor URL: {predictor_url}")
     print("=" * 60)
 
     return isvc_name

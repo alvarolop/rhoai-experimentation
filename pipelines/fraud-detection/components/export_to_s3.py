@@ -39,13 +39,13 @@ def export_to_s3(
     metadata = json.loads(model_metadata)
 
     # Load sklearn model
-    print(f"\n✓ Loading model from {model_input.path}...")
+    print(f"\nOK Loading model from {model_input.path}...")
     with open(model_input.path, "rb") as f:
         sklearn_model = pickle.load(f)
-    print(f"  ✅ Loaded {metadata.get('model_type', 'model')}")
+    print(f"  OK Loaded {metadata.get('model_type', 'model')}")
 
     # Convert to ONNX
-    print(f"\n✓ Converting to ONNX format...")
+    print(f"\nOK Converting to ONNX format...")
     n_features = metadata.get("n_features", 8)
 
     # Create dummy input for ONNX conversion
@@ -53,19 +53,19 @@ def export_to_s3(
 
     try:
         onnx_model = to_onnx(sklearn_model, initial_types=initial_type, target_opset=15)
-        print(f"  ✅ Converted to ONNX (opset 15)")
+        print(f"  OK Converted to ONNX (opset 15)")
     except Exception as e:
-        print(f"  ❌ ONNX conversion failed: {e}")
+        print(f"  ERROR ONNX conversion failed: {e}")
         raise
 
     # Save ONNX locally first
     onnx_path = f"/tmp/{model_name}-{model_version}.onnx"
     with open(onnx_path, "wb") as f:
         f.write(onnx_model.SerializeToString())
-    print(f"  ✓ Saved locally to {onnx_path}")
+    print(f"  OK Saved locally to {onnx_path}")
 
     # Upload to S3
-    print(f"\n✓ Uploading to S3...")
+    print(f"\nOK Uploading to S3...")
     s3_key = f"models/{model_name}/{model_version}/model.onnx"
 
     try:
@@ -79,25 +79,25 @@ def export_to_s3(
         # Create bucket if it doesn't exist
         try:
             s3_client.head_bucket(Bucket=s3_bucket)
-            print(f"  ✓ Bucket '{s3_bucket}' exists")
+            print(f"  OK Bucket '{s3_bucket}' exists")
         except:
-            print(f"  ✓ Creating bucket '{s3_bucket}'...")
+            print(f"  OK Creating bucket '{s3_bucket}'...")
             s3_client.create_bucket(Bucket=s3_bucket)
 
         # Upload model
         s3_client.upload_file(onnx_path, s3_bucket, s3_key)
         s3_uri = f"s3://{s3_bucket}/{s3_key}"
-        print(f"  ✅ Uploaded to {s3_uri}")
+        print(f"  OK Uploaded to {s3_uri}")
 
         # Also upload metadata
         metadata_key = f"models/{model_name}/{model_version}/metadata.json"
         s3_client.put_object(
             Bucket=s3_bucket, Key=metadata_key, Body=json.dumps(metadata, indent=2)
         )
-        print(f"  ✅ Uploaded metadata to s3://{s3_bucket}/{metadata_key}")
+        print(f"  OK Uploaded metadata to s3://{s3_bucket}/{metadata_key}")
 
     except Exception as e:
-        print(f"  ❌ S3 upload failed: {e}")
+        print(f"  ERROR S3 upload failed: {e}")
         s3_uri = f"local://{onnx_path}"
         print(f"  ⚠️  Using local path instead")
 
@@ -114,7 +114,7 @@ def export_to_s3(
     with open(s3_output.path, "w") as f:
         json.dump(s3_info, f, indent=2)
 
-    print(f"\n✓ S3 info saved to {s3_output.path}")
+    print(f"\nOK S3 info saved to {s3_output.path}")
     print("=" * 60)
 
     return s3_uri

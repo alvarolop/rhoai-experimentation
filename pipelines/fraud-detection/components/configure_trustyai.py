@@ -25,7 +25,7 @@ def configure_trustyai(
         deployment_info = json.load(f)
 
     isvc_name = deployment_info["inference_service_name"]
-    print(f"\n✓ Model: {isvc_name}")
+    print(f"\nOK Model: {isvc_name}")
 
     if not enable_metrics:
         print("  ⚠️  Metrics disabled, skipping TrustyAI configuration")
@@ -38,7 +38,7 @@ def configure_trustyai(
 
         # Check if TrustyAIService exists
         trustyai_name = "trustyai-service"
-        print(f"\n✓ Checking TrustyAIService '{trustyai_name}'...")
+        print(f"\nOK Checking TrustyAIService '{trustyai_name}'...")
 
         try:
             existing_service = api.get_namespaced_custom_object(
@@ -48,11 +48,11 @@ def configure_trustyai(
                 plural="trustyaiservices",
                 name=trustyai_name,
             )
-            print(f"  ✅ TrustyAIService already exists")
+            print(f"  OK TrustyAIService already exists")
 
         except client.exceptions.ApiException as e:
             if e.status == 404:
-                print(f"  ✓ Creating TrustyAIService...")
+                print(f"  OK Creating TrustyAIService...")
 
                 # Create TrustyAIService
                 trustyai_service = {
@@ -80,12 +80,12 @@ def configure_trustyai(
                     plural="trustyaiservices",
                     body=trustyai_service,
                 )
-                print(f"  ✅ Created TrustyAIService")
+                print(f"  OK Created TrustyAIService")
             else:
                 raise
 
         # Create InferenceServiceMonitor for the model
-        print(f"\n✓ Configuring monitoring for '{isvc_name}'...")
+        print(f"\nOK Configuring monitoring for '{isvc_name}'...")
 
         monitor_name = f"{isvc_name}-monitor"
 
@@ -128,21 +128,21 @@ def configure_trustyai(
                 plural="inferenceservicemonitors",
                 body=monitor,
             )
-            print(f"  ✅ Created InferenceServiceMonitor '{monitor_name}'")
+            print(f"  OK Created InferenceServiceMonitor '{monitor_name}'")
 
         except client.exceptions.ApiException as e:
             if e.status == 409:
-                print(f"  ✓ InferenceServiceMonitor '{monitor_name}' already exists")
+                print(f"  OK InferenceServiceMonitor '{monitor_name}' already exists")
             else:
                 print(f"  ⚠️  Monitor creation returned {e.status}: {e.reason}")
 
         # Get TrustyAI service endpoint
         trustyai_url = f"http://trustyai-service.{namespace}.svc.cluster.local"
-        print(f"\n✓ TrustyAI Service URL: {trustyai_url}")
-        print(f"✓ Metrics dashboard: {trustyai_url}/q/metrics")
+        print(f"\nOK TrustyAI Service URL: {trustyai_url}")
+        print(f"OK Metrics dashboard: {trustyai_url}/q/metrics")
 
     except Exception as e:
-        print(f"  ❌ TrustyAI configuration failed: {e}")
+        print(f"  ERROR TrustyAI configuration failed: {e}")
         print(f"  ⚠️  Model deployed without monitoring")
         return "failed"
 

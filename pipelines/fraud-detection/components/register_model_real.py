@@ -29,7 +29,7 @@ def register_model_real(
     metadata = json.loads(model_metadata)
 
     # Create RegisteredModel if it doesn't exist
-    print(f"\n✓ Checking RegisteredModel '{model_name}'...")
+    print(f"\nOK Checking RegisteredModel '{model_name}'...")
 
     registered_model_payload = {
         "name": model_name,
@@ -52,10 +52,10 @@ def register_model_real(
         if response.status_code in [200, 201]:
             registered_model = response.json()
             registered_model_id = registered_model["id"]
-            print(f"  ✅ Created RegisteredModel: {registered_model_id}")
+            print(f"  OK Created RegisteredModel: {registered_model_id}")
         elif response.status_code == 409:
             # Already exists, get it
-            print(f"  ✓ RegisteredModel already exists, fetching...")
+            print(f"  OK RegisteredModel already exists, fetching...")
             response = requests.get(
                 f"{model_registry_url}/api/model_registry/v1alpha3/registered_models?name={model_name}",
                 timeout=10,
@@ -64,7 +64,7 @@ def register_model_real(
                 models = response.json().get("items", [])
                 if models:
                     registered_model_id = models[0]["id"]
-                    print(f"  ✅ Found RegisteredModel: {registered_model_id}")
+                    print(f"  OK Found RegisteredModel: {registered_model_id}")
                 else:
                     raise Exception("RegisteredModel exists but couldn't fetch it")
             else:
@@ -77,12 +77,12 @@ def register_model_real(
             )
 
     except Exception as e:
-        print(f"  ❌ Model Registry error: {e}")
+        print(f"  ERROR Model Registry error: {e}")
         print(f"  ⚠️  Continuing with local registration...")
         registered_model_id = f"local-{model_name}"
 
     # Create ModelVersion
-    print(f"\n✓ Creating ModelVersion '{model_version}'...")
+    print(f"\nOK Creating ModelVersion '{model_version}'...")
 
     model_version_payload = {
         "name": model_version,
@@ -109,13 +109,13 @@ def register_model_real(
         if response.status_code in [200, 201]:
             model_version_obj = response.json()
             model_version_id = model_version_obj["id"]
-            print(f"  ✅ Created ModelVersion: {model_version_id}")
+            print(f"  OK Created ModelVersion: {model_version_id}")
         else:
             print(f"  ⚠️  ModelVersion creation returned {response.status_code}")
             model_version_id = f"local-{model_version}"
 
     except Exception as e:
-        print(f"  ❌ ModelVersion creation error: {e}")
+        print(f"  ERROR ModelVersion creation error: {e}")
         model_version_id = f"local-{model_version}"
 
     # Save registration info
@@ -132,7 +132,7 @@ def register_model_real(
     with open(registry_output.path, "w") as f:
         json.dump(registration_info, f, indent=2)
 
-    print(f"\n✓ Registration info saved to {registry_output.path}")
+    print(f"\nOK Registration info saved to {registry_output.path}")
     print("=" * 60)
 
     return model_version_id

@@ -116,4 +116,4 @@ if __name__ == "__main__":
         pipeline_func=fraud_detection_pipeline,
         package_path="fraud_detection_pipeline.yaml",
     )
-    print("✅ Pipeline compiled successfully to fraud_detection_pipeline.yaml")
+    print("OK Pipeline compiled successfully to fraud_detection_pipeline.yaml")

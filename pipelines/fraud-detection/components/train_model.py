@@ -30,7 +30,7 @@ def train_fraud_model(
 
     # Load data
     df = pd.read_csv(input_data.path)
-    print(f"\n✓ Loaded dataset: {df.shape[0]} samples, {df.shape[1]} features")
+    print(f"\nOK Loaded dataset: {df.shape[0]} samples, {df.shape[1]} features")
 
     X = df.drop("is_fraud", axis=1)
     y = df["is_fraud"]
@@ -44,10 +44,10 @@ def train_fraud_model(
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=test_size, random_state=42, stratify=y
     )
-    print(f"\n✓ Train/test split: {len(X_train)}/{len(X_test)} samples")
+    print(f"\nOK Train/test split: {len(X_train)}/{len(X_test)} samples")
 
     # Train model
-    print(f"\n✓ Training RandomForest (n_estimators={n_estimators})...")
+    print(f"\nOK Training RandomForest (n_estimators={n_estimators})...")
     clf = RandomForestClassifier(
         n_estimators=n_estimators,
         max_depth=10,
@@ -63,7 +63,7 @@ def train_fraud_model(
     recall = recall_score(y_test, y_pred)
     f1 = f1_score(y_test, y_pred)
 
-    print(f"\n✓ Model Performance:")
+    print(f"\nOK Model Performance:")
     print(f"  - Accuracy:  {accuracy:.4f}")
     print(f"  - Precision: {precision:.4f}")
     print(f"  - Recall:    {recall:.4f}")
@@ -78,7 +78,7 @@ def train_fraud_model(
     # Save model
     with open(model_output.path, "wb") as f:
         pickle.dump(clf, f)
-    print(f"\n✓ Model saved to {model_output.path}")
+    print(f"\nOK Model saved to {model_output.path}")
 
     # Return metadata
     model_metadata = {
