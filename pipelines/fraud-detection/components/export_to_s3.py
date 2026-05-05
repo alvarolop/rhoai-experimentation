@@ -62,7 +62,7 @@ def export_to_s3(
             sklearn_model,
             initial_types=initial_type,
             target_opset=12,
-            options={id(sklearn_model): {'zipmap': False}}
+            options={id(sklearn_model): {"zipmap": False}},
         )
         print("  OK Converted to ONNX (opset 12)")
     except Exception as e:
