@@ -67,18 +67,7 @@ def fraud_detection_pipeline(
         n_estimators=n_estimators,
     )
 
-    # Step 4: Register model in Model Registry
-    register_task = register_model_real(
-        model_input=train_task.outputs["model_output"],
-        model_metadata=train_task.outputs[
-            "Output"
-        ],  # Return value from train_fraud_model
-        model_registry_url=model_registry_url,
-        model_name=model_name,
-        model_version=model_version,
-    )
-
-    # Step 5: Export to ONNX and upload to S3
+    # Step 4: Export to ONNX and upload to S3 (before registering so we have S3 location)
     export_task = export_to_s3(
         model_input=train_task.outputs["model_output"],
         model_metadata=train_task.outputs[
@@ -91,7 +80,18 @@ def fraud_detection_pipeline(
         model_name=model_name,
         model_version=model_version,
     )
-    export_task.after(register_task)
+
+    # Step 5: Register model in Model Registry (with S3 location from export)
+    register_task = register_model_real(
+        model_input=train_task.outputs["model_output"],
+        model_metadata=train_task.outputs[
+            "Output"
+        ],  # Return value from train_fraud_model
+        model_registry_url=model_registry_url,
+        model_name=model_name,
+        model_version=model_version,
+        s3_info_input=export_task.outputs["s3_output"],  # S3 info artifact from export
+    )
 
     # Step 6: Deploy with OpenVINO runtime
     deploy_task = deploy_openvino(

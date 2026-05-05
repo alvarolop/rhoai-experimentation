@@ -12,21 +12,38 @@ def register_model_real(
     model_registry_url: str,
     model_name: str,
     model_version: str,
+    s3_info_input: Input[Artifact],
     registry_output: Output[Artifact],
 ) -> str:
     """
     Register model in RHOAI Model Registry using the REST API.
+    Includes S3/MinIO model location in metadata.
     Returns registered model ID.
     """
     import requests
     import json
     import sys
+    from datetime import datetime
 
     print("=" * 60)
     print("Registering Model in Model Registry")
     print("=" * 60)
 
     metadata = json.loads(model_metadata)
+
+    # Load S3 information from export task
+    with open(s3_info_input.path, "r") as f:
+        s3_info = json.load(f)
+
+    s3_uri = s3_info.get("s3_uri", "")
+    s3_bucket = s3_info.get("s3_bucket", "")
+    s3_key = s3_info.get("s3_key", "")
+    minio_ui_url = s3_info.get("minio_ui_url", "")
+    versioned_model_version = s3_info.get("model_version", "v1")
+
+    print(f"\nOK Version with date suffix: {versioned_model_version}")
+    print(f"   S3 URI: {s3_uri}")
+    print(f"   MinIO UI: {minio_ui_url}")
 
     # Create RegisteredModel if it doesn't exist
     print(f"\nOK Checking RegisteredModel '{model_name}'...")
@@ -82,19 +99,34 @@ def register_model_real(
         registered_model_id = f"local-{model_name}"
 
     # Create ModelVersion
-    print(f"\nOK Creating ModelVersion '{model_version}'...")
+    print(f"\nOK Creating ModelVersion '{versioned_model_version}'...")
+
+    # Build custom properties with model metrics and S3 location
+    custom_properties = {
+        "accuracy": {"double_value": metadata.get("accuracy", 0.0)},
+        "precision": {"double_value": metadata.get("precision", 0.0)},
+        "recall": {"double_value": metadata.get("recall", 0.0)},
+        "f1_score": {"double_value": metadata.get("f1_score", 0.0)},
+        "n_features": {"int_value": str(metadata.get("n_features", 0))},
+        "model_type": {"string_value": metadata.get("model_type", "unknown")},
+    }
+
+    # Add S3/MinIO location if provided
+    if s3_uri:
+        custom_properties["s3_uri"] = {"string_value": s3_uri}
+        print(f"  OK Model S3 URI: {s3_uri}")
+    if s3_bucket:
+        custom_properties["s3_bucket"] = {"string_value": s3_bucket}
+    if s3_key:
+        custom_properties["s3_key"] = {"string_value": s3_key}
+    if minio_ui_url:
+        custom_properties["minio_ui_url"] = {"string_value": minio_ui_url}
+        print(f"  OK MinIO UI: {minio_ui_url}")
 
     model_version_payload = {
-        "name": model_version,
-        "description": f"Version {model_version} trained with {metadata.get('n_estimators', 'N/A')} estimators",
-        "customProperties": {
-            "accuracy": {"double_value": metadata.get("accuracy", 0.0)},
-            "precision": {"double_value": metadata.get("precision", 0.0)},
-            "recall": {"double_value": metadata.get("recall", 0.0)},
-            "f1_score": {"double_value": metadata.get("f1_score", 0.0)},
-            "n_features": {"int_value": str(metadata.get("n_features", 0))},
-            "model_type": {"string_value": metadata.get("model_type", "unknown")},
-        },
+        "name": versioned_model_version,
+        "description": f"Version {versioned_model_version} trained with {metadata.get('n_estimators', 'N/A')} estimators",
+        "customProperties": custom_properties,
         "author": "data-science-pipelines",
     }
 
@@ -123,9 +155,13 @@ def register_model_real(
         "registered_model_id": registered_model_id,
         "model_version_id": model_version_id,
         "model_name": model_name,
-        "model_version": model_version,
+        "model_version": versioned_model_version,
         "registry_url": model_registry_url,
         "model_path": model_input.path,
+        "s3_uri": s3_uri,
+        "s3_bucket": s3_bucket,
+        "s3_key": s3_key,
+        "minio_ui_url": minio_ui_url,
         "metadata": metadata,
     }
 
@@ -133,6 +169,10 @@ def register_model_real(
         json.dump(registration_info, f, indent=2)
 
     print(f"\nOK Registration info saved to {registry_output.path}")
+    print(f"   Model version: {versioned_model_version}")
+    print(f"   Model Registry ID: {model_version_id}")
+    if s3_uri:
+        print(f"   Model location: {s3_uri}")
     print("=" * 60)
 
     return model_version_id

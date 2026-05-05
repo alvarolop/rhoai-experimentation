@@ -32,12 +32,16 @@ def export_to_s3(
     from skl2onnx import to_onnx
     from skl2onnx.common.data_types import FloatTensorType
     import numpy as np
+    from datetime import datetime
 
     print("=" * 60)
     print("Export Model to ONNX and Upload to S3")
     print("=" * 60)
 
     metadata = json.loads(model_metadata)
+
+    # Generate date suffix for model filename
+    date_suffix = datetime.now().strftime("%Y%m%d")
 
     # Load sklearn model
     print(f"\nOK Loading model from {model_input.path}...")
@@ -65,9 +69,9 @@ def export_to_s3(
         f.write(onnx_model.SerializeToString())
     print(f"  OK Saved locally to {onnx_path}")
 
-    # Upload to S3
+    # Upload to S3 - simplified path in bucket root with date suffix
     print(f"\nOK Uploading to S3...")
-    s3_key = f"models/{model_name}/{model_version}/model.onnx"
+    s3_key = f"{model_name}-{date_suffix}.onnx"
 
     try:
         s3_client = boto3.client(
@@ -90,8 +94,8 @@ def export_to_s3(
         s3_uri = f"s3://{s3_bucket}/{s3_key}"
         print(f"  OK Uploaded to {s3_uri}")
 
-        # Also upload metadata
-        metadata_key = f"models/{model_name}/{model_version}/metadata.json"
+        # Also upload metadata with simplified path
+        metadata_key = f"{model_name}-{date_suffix}-metadata.json"
         s3_client.put_object(
             Bucket=s3_bucket, Key=metadata_key, Body=json.dumps(metadata, indent=2)
         )
@@ -102,14 +106,28 @@ def export_to_s3(
         s3_uri = f"local://{onnx_path}"
         print(f"  WARNING  Using local path instead")
 
+    # Generate MinIO UI URL
+    # Extract cluster domain from s3_endpoint (e.g., minio.minio.svc.cluster.local:9000)
+    # Convert to external route (e.g., https://minio-ui-minio.apps.ocp.sandbox3872.opentlc.com)
+    # For now, use a placeholder pattern - this should be configured based on your cluster
+    if "svc.cluster.local" in s3_endpoint:
+        # Internal endpoint - construct external URL
+        # This is a simplified pattern - adjust based on your cluster's route naming
+        minio_ui_url = f"https://minio-ui-minio.apps.ocp.sandbox3872.opentlc.com/buckets/{s3_bucket}/admin/summary"
+    else:
+        minio_ui_url = f"https://{s3_endpoint.split(':')[0]}/buckets/{s3_bucket}/admin/summary"
+
+    print(f"  OK MinIO UI: {minio_ui_url}")
+
     # Save S3 info
     s3_info = {
         "s3_uri": s3_uri,
         "s3_bucket": s3_bucket,
         "s3_key": s3_key,
+        "minio_ui_url": minio_ui_url,
         "model_format": "onnx",
         "model_name": model_name,
-        "model_version": model_version,
+        "model_version": f"{model_version}-{date_suffix}",
     }
 
     with open(s3_output.path, "w") as f:
