@@ -2,15 +2,16 @@
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
-  generateName: ci-kfp-pipeline-run-
+  generateName: legacy-kfp-pipeline-run-
   namespace: rhoai-playground
   annotations:
     description: |
-      Example PipelineRun for CI/CD pipeline.
-      This is the recommended approach for uploading pipeline definitions.
+      LEGACY all-in-one pipeline (deprecated).
+      This pipeline clones repo, lints, and creates a KFP run in one go.
+      Prefer using ci-kfp-pipeline (for uploads) + run-kfp-pipeline (for execution).
 spec:
   pipelineRef:
-    name: ci-kfp-pipeline
+    name: deploy-kfp-pipeline-legacy
   params:
     - name: git-url
       value: https://github.com/alvarolop/rhoai-experimentation.git
@@ -22,8 +23,10 @@ spec:
       value: fraud-detection-pipeline
     - name: pipeline-file
       value: pipeline.py
-    - name: pipeline-description
-      value: "Fraud Detection ML Pipeline - CI/CD Upload"
+    - name: wait-for-completion
+      value: "true"
+    - name: timeout
+      value: "3600"
   workspaces:
     - name: shared-workspace
       volumeClaimTemplate:

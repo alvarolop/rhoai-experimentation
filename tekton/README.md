@@ -1,137 +1,328 @@
-# Tekton Automation
+# Tekton Automation for KFP Pipelines
 
-This directory contains resources for automating Kubeflow pipeline deployment using Tekton (OpenShift Pipelines).
+This directory contains PipelineRun examples for deploying and executing Kubeflow pipelines using Tekton (OpenShift Pipelines).
 
 ## Overview
 
-The Tekton pipeline automates the following workflow:
+The Tekton automation is split into two separate pipelines:
 
-1. **Lint** - Validates Python syntax of the Kubeflow pipeline
-2. **Compile & Upload** - Compiles the pipeline to YAML and uploads to Data Science Pipelines
-3. **Run** - Triggers execution of the Kubeflow pipeline
+### 1. CI/CD Pipeline (`ci-kfp-pipeline`)
 
-## Pipeline Components
+**Purpose**: Validate and upload pipeline definitions  
+**Trigger**: Code changes (git webhook or manual)  
+**File**: `ci-kfp-pipelinerun.yaml`
 
-### Tasks
+**Workflow**:
+1. Clone git repository
+2. Lint Python code (Black, flake8, pylint)
+3. Compile KFP pipeline to YAML
+4. **Upload pipeline definition** to DSP (NOT a run)
 
-- `lint-kfp-pipeline` - Validates pipeline Python code syntax
-- `compile-upload-kfp` - Installs dependencies, compiles, and uploads the pipeline
-- `run-kfp-pipeline` - Triggers a pipeline run on the DSP server
+**Result**: Pipeline available in RHOAI UI for execution
 
-### Pipeline
+### 2. Execution Pipeline (`run-kfp-pipeline`)
 
-`deploy-kfp-pipeline` - Orchestrates the three tasks sequentially
+**Purpose**: Create runs from existing pipeline definitions  
+**Trigger**: Manual, schedule, or external trigger  
+**File**: `run-kfp-pipelinerun.yaml`
 
-## Usage
+**Workflow**:
+1. Lookup existing pipeline by name
+2. Create a new run with parameters
+3. Optionally wait for completion
 
-### Deploy via Helm
+**Result**: KFP pipeline run executing in RHOAI
 
-The Tekton resources are automatically deployed when you install the Helm chart:
+### 3. Legacy Pipeline (Deprecated)
+
+**File**: `legacy-pipelinerun.yaml`
+
+The old all-in-one pipeline that does everything in one run. Prefer using the split approach above.
+
+## Files
+
+| File | Pipeline | Description |
+|------|----------|-------------|
+| `ci-kfp-pipelinerun.yaml` | CI/CD | Upload pipeline definition (use when code changes) |
+| `run-kfp-pipelinerun.yaml` | Execution | Create run from existing pipeline (use to train/execute) |
+| `example-run.yaml` | CI/CD | Same as `ci-kfp-pipelinerun.yaml` (default example) |
+| `legacy-pipelinerun.yaml` | Legacy | Old all-in-one pipeline (deprecated) |
+
+## Quick Start
+
+### Step 1: Upload Pipeline Definition
+
+**When to use**: When pipeline code changes (new features, bug fixes, first deployment)
 
 ```bash
-helm install fraud-detection chart/ \
-  --set s3.accessKeyId=<your-key> \
-  --set s3.secretAccessKey=<your-secret>
+oc create -f tekton/ci-kfp-pipelinerun.yaml
 ```
 
-### Trigger a Pipeline Run
-
-**Manual Trigger:**
+Or use the example:
 
 ```bash
 oc create -f tekton/example-run.yaml
 ```
 
-Or create directly:
+**Monitor**:
+
+```bash
+tkn pipelinerun logs -f -n rhoai-playground $(tkn pr list -n rhoai-playground --limit 1 -o name)
+```
+
+**Result**: Pipeline definition `fraud-detection-pipeline` uploaded to DSP
+
+### Step 2: Execute Pipeline
+
+**When to use**: When you want to train a model, process data, run the pipeline
+
+**Default parameters**:
+
+```bash
+oc create -f tekton/run-kfp-pipelinerun.yaml
+```
+
+**Custom parameters**:
 
 ```bash
 cat <<EOF | oc create -f -
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
-  generateName: fraud-detection-run-
-  namespace: rhoai-pipelines-demo
+  generateName: run-kfp-pipeline-
+  namespace: rhoai-playground
 spec:
   pipelineRef:
-    name: deploy-kfp-pipeline
+    name: run-kfp-pipeline
   params:
-    - name: git-url
-      value: https://github.com/alvarolop/rhoai-experimentation.git
-    - name: git-revision
-      value: main
-    - name: pipeline-path
-      value: pipelines/fraud-detection
     - name: pipeline-name
       value: fraud-detection-pipeline
-    - name: dsp-api-url
-      value: http://ds-pipeline-dspa.rhoai-pipelines-demo.svc.cluster.local:8888
-  workspaces:
-    - name: shared-workspace
-      persistentVolumeClaim:
-        claimName: pipeline-workspace
+    - name: experiment-name
+      value: fraud-detection-experiments
+    - name: parameters
+      value: '{"num_samples": 20000, "n_estimators": 200, "fraud_ratio": 0.03}'
+    - name: wait-for-completion
+      value: "true"
 EOF
 ```
 
-**Automated Trigger (Webhook):**
+**Monitor**:
 
-Get the webhook URL:
 ```bash
-oc get route kfp-webhook-listener -n rhoai-pipelines-demo -o jsonpath='{.spec.host}'
+tkn pipelinerun logs -f -n rhoai-playground $(tkn pr list -n rhoai-playground --limit 1 -o name)
 ```
 
-Configure in GitHub:
-- Repository → Settings → Webhooks → Add webhook
-- Payload URL: `https://<route-host>`
-- Content type: `application/json`
-- Secret: Value from Helm chart (`tekton.triggers.webhookSecret`)
-- Events: Push
+## Common Workflows
 
-See [../docs/notes/tekton-triggers-setup.md](../docs/notes/tekton-triggers-setup.md) for detailed setup.
-
-### Monitor Progress
+### Development Workflow
 
 ```bash
-# List pipeline runs
-oc get pipelinerun -n rhoai-pipelines-demo
+# 1. Make code changes to pipelines/fraud-detection/
 
-# View logs (follow all containers)
-oc logs -f -n rhoai-pipelines-demo -l tekton.dev/pipelineRun=<run-name> --all-containers
+# 2. Upload new pipeline definition
+oc create -f tekton/ci-kfp-pipelinerun.yaml
 
-# Or watch in OpenShift console
-# Pipelines → PipelineRuns
+# 3. Execute the pipeline
+oc create -f tekton/run-kfp-pipelinerun.yaml
+```
+
+### Production Workflow
+
+```bash
+# CI/CD: Upload pipeline on git push (webhook trigger)
+# Execution: CronJob or manual trigger
+
+# Example: Daily execution at 2 AM
+cat <<EOF | oc create -f -
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: fraud-detection-daily
+  namespace: rhoai-playground
+spec:
+  schedule: "0 2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: pipeline
+          containers:
+          - name: create-run
+            image: quay.io/openshift/origin-cli:latest
+            command: ["/bin/bash", "-c"]
+            args:
+            - |
+              oc create -f - <<YAML
+              apiVersion: tekton.dev/v1
+              kind: PipelineRun
+              metadata:
+                generateName: run-kfp-pipeline-
+              spec:
+                pipelineRef:
+                  name: run-kfp-pipeline
+                params:
+                  - name: pipeline-name
+                    value: fraud-detection-pipeline
+              YAML
+          restartPolicy: Never
+EOF
+```
+
+### Experimentation Workflow
+
+```bash
+# Upload pipeline once
+oc create -f tekton/ci-kfp-pipelinerun.yaml
+
+# Run with different parameters
+for estimators in 50 100 200; do
+  cat <<EOF | oc create -f -
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: run-kfp-pipeline-
+  namespace: rhoai-playground
+spec:
+  pipelineRef:
+    name: run-kfp-pipeline
+  params:
+    - name: pipeline-name
+      value: fraud-detection-pipeline
+    - name: experiment-name
+      value: hyperparameter-tuning
+    - name: run-name
+      value: "estimators-${estimators}"
+    - name: parameters
+      value: '{"n_estimators": ${estimators}}'
+EOF
+done
 ```
 
 ## Parameters
 
-The Tekton pipeline accepts these parameters:
+### CI/CD Pipeline Parameters
 
-- `pipeline-name` - Name of the Kubeflow pipeline (default: fraud-detection-pipeline)
-- `pipeline-file` - Python file to compile (default: pipeline.py)
-- `dsp-api-url` - Data Science Pipelines API endpoint
-- `namespace` - Target namespace for deployment
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `git-url` | Git repository URL | `https://github.com/alvarolop/rhoai-experimentation.git` |
+| `git-revision` | Branch/tag/SHA to clone | `main` |
+| `pipeline-path` | Path to pipeline in repo | `pipelines/fraud-detection` |
+| `pipeline-name` | Name for the pipeline | `fraud-detection-pipeline` |
+| `pipeline-file` | Python file to compile | `pipeline.py` |
+| `pipeline-description` | Description for the pipeline | `"Fraud Detection ML Pipeline..."` |
+
+### Execution Pipeline Parameters
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `pipeline-name` | Existing pipeline to run | `fraud-detection-pipeline` |
+| `experiment-name` | Experiment to organize runs | `fraud-detection-experiments` |
+| `run-name` | Name for this run | `""` (auto-generated) |
+| `parameters` | JSON pipeline parameters | `"{}"` |
+| `wait-for-completion` | Wait for run to finish | `"true"` |
+| `timeout` | Timeout in seconds | `"3600"` |
+
+## Monitoring
+
+### List all pipeline runs
+
+```bash
+# Tekton pipeline runs
+tkn pipelinerun list -n rhoai-playground
+
+# KFP pipeline runs (via CLI)
+oc get workflows -n rhoai-playground
+```
+
+### View logs
+
+```bash
+# Tekton pipeline logs
+tkn pipelinerun logs ci-kfp-pipeline-run-xxxxx -f -n rhoai-playground
+tkn pipelinerun logs run-kfp-pipeline-xxxxx -f -n rhoai-playground
+
+# Or use kubectl
+oc logs -f -n rhoai-playground -l tekton.dev/pipelineRun=<run-name> --all-containers
+```
+
+### OpenShift Console
+
+- **Tekton**: Pipelines → PipelineRuns
+- **KFP**: Data Science Pipelines → Runs
+
+## Git Authentication
+
+For private repositories, uncomment the workspace in the PipelineRun:
+
+**SSH Authentication:**
+
+```yaml
+workspaces:
+  - name: shared-workspace
+    volumeClaimTemplate: ...
+  - name: git-ssh-credentials
+    secret:
+      secretName: git-auth-ssh
+```
+
+**Basic Authentication:**
+
+```yaml
+workspaces:
+  - name: shared-workspace
+    volumeClaimTemplate: ...
+  - name: git-basic-credentials
+    secret:
+      secretName: git-auth-basic
+```
+
+See [Azure DevOps Git Authentication Guide](../docs/azure-devops-git-auth.md) for detailed setup.
+
+## Troubleshooting
+
+### Pipeline not found error
+
+```
+ERROR: Pipeline not found: fraud-detection-pipeline
+```
+
+**Solution**: Run the CI/CD pipeline first to upload the definition:
+
+```bash
+oc create -f tekton/ci-kfp-pipelinerun.yaml
+```
+
+### Lint failures
+
+```
+ERROR: Code not formatted
+```
+
+**Solution**: Run Black locally before pushing:
+
+```bash
+black pipelines/fraud-detection/
+```
+
+### Git authentication failures
+
+```
+ERROR: Repository not found
+```
+
+**Solution**: Configure git authentication secrets. See [docs/azure-devops-git-auth.md](../docs/azure-devops-git-auth.md)
 
 ## Requirements
 
-- OpenShift Pipelines operator installed
-- ServiceAccount with permissions to:
-  - Read/write PVCs
-  - Access Data Science Pipelines API
-  - Create InferenceServices (if deploying models)
+- OpenShift Pipelines operator v1.15+
+- RHOAI with Data Science Pipelines enabled
+- ServiceAccount `pipeline` with permissions to:
+  - Create/read PVCs
+  - Access DSP API
+  - Create/manage workflows
 
-## Failure Handling
+## Related Documentation
 
-The pipeline fails fast:
-
-- **Lint failures** - Pipeline stops if syntax errors are found
-- **Compile failures** - Pipeline stops if KFP compilation fails
-- **Upload failures** - Pipeline stops if DSP API is unreachable
-
-Check task logs to diagnose issues:
-
-```bash
-# List task runs
-oc get taskrun -n rhoai-pipelines-demo
-
-# View specific task run logs
-oc logs -n rhoai-pipelines-demo <taskrun-pod-name>
-```
+- [Helm Chart README](../chart/README.md) - Full deployment guide
+- [Git Authentication](../docs/azure-devops-git-auth.md) - Private repo setup
+- [Using Red Hat Tasks](../docs/notes/using-red-hat-tasks.md) - Task resolver details

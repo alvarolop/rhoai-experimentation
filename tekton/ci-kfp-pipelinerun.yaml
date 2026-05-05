@@ -6,8 +6,9 @@ metadata:
   namespace: rhoai-playground
   annotations:
     description: |
-      Example PipelineRun for CI/CD pipeline.
-      This is the recommended approach for uploading pipeline definitions.
+      CI/CD pipeline for KFP pipeline code.
+      Clones repo, lints code, compiles pipeline, and uploads definition to DSP.
+      Use this when pipeline code changes.
 spec:
   pipelineRef:
     name: ci-kfp-pipeline
@@ -23,7 +24,7 @@ spec:
     - name: pipeline-file
       value: pipeline.py
     - name: pipeline-description
-      value: "Fraud Detection ML Pipeline - CI/CD Upload"
+      value: "Fraud Detection ML Pipeline - Automated CI/CD Upload"
   workspaces:
     - name: shared-workspace
       volumeClaimTemplate:

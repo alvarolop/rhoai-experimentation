@@ -1,0 +1,30 @@
+---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: run-kfp-pipeline-
+  namespace: rhoai-playground
+  annotations:
+    description: |
+      Execution pipeline for KFP pipelines.
+      Creates a run from an existing pipeline definition in DSP.
+      No git clone, no linting - just execution.
+      Use this to run the pipeline with different parameters.
+spec:
+  pipelineRef:
+    name: run-kfp-pipeline
+  params:
+    - name: pipeline-name
+      value: fraud-detection-pipeline
+    - name: experiment-name
+      value: fraud-detection-experiments
+    - name: run-name
+      value: ""  # Auto-generated if empty
+    - name: parameters
+      value: '{}'  # JSON string of pipeline parameters
+      # Example with parameters:
+      # value: '{"num_samples": 20000, "n_estimators": 200, "fraud_ratio": 0.03}'
+    - name: wait-for-completion
+      value: "true"
+    - name: timeout
+      value: "3600"
