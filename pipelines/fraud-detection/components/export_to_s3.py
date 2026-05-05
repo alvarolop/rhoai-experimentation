@@ -56,8 +56,15 @@ def export_to_s3(
     initial_type = [("input", FloatTensorType([None, n_features]))]
 
     try:
-        onnx_model = to_onnx(sklearn_model, initial_types=initial_type, target_opset=15)
-        print("  OK Converted to ONNX (opset 15)")
+        # Use opset 12 for better RandomForest compatibility
+        # opset 15+ has issues with TreeEnsembleClassifier node creation
+        onnx_model = to_onnx(
+            sklearn_model,
+            initial_types=initial_type,
+            target_opset=12,
+            options={id(sklearn_model): {'zipmap': False}}
+        )
+        print("  OK Converted to ONNX (opset 12)")
     except Exception as e:
         print(f"  ERROR ONNX conversion failed: {e}")
         raise
