@@ -104,6 +104,26 @@ spec:
         pipeline_id = pipeline.pipeline_id
         print(f'Found pipeline ID: {pipeline_id}')
 
+        # Get the default version ID
+        pipeline_version_id = None
+        if hasattr(pipeline, 'default_version') and pipeline.default_version:
+            pipeline_version_id = pipeline.default_version.pipeline_version_id
+            print(f'Found default version ID: {pipeline_version_id}')
+        else:
+            # Fallback: list versions and get the first one
+            print('No default version found, listing versions...')
+            try:
+                versions = client.list_pipeline_versions(pipeline_id, page_size=1)
+                if hasattr(versions, 'pipeline_versions') and versions.pipeline_versions:
+                    pipeline_version_id = versions.pipeline_versions[0].pipeline_version_id
+                    print(f'Found version ID: {pipeline_version_id}')
+            except Exception as e:
+                print(f'WARNING: Could not list versions: {e}')
+
+        if not pipeline_version_id:
+            print('ERROR: Could not determine pipeline version ID')
+            sys.exit(1)
+
         # Parse parameters
         params_str = "$(params.parameters)"
         params_dict = json.loads(params_str) if params_str and params_str != "{}" else {}
@@ -140,6 +160,7 @@ spec:
             experiment_id=experiment_id,
             job_name=run_name,
             pipeline_id=pipeline_id,
+            version_id=pipeline_version_id,
             params=params_dict
         )
 
