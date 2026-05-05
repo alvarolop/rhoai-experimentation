@@ -23,7 +23,7 @@ def benchmark_model(
     latencies = []
 
     for i in range(num_requests):
-        sample_data = {
+        _ = {
             "inputs": [
                 {
                     "name": "input",
@@ -50,7 +50,7 @@ def benchmark_model(
     avg_latency = np.mean(latencies)
     requests_per_sec = 1000 / avg_latency
 
-    print(f"\nBenchmark Results:")
+    print("\nBenchmark Results:")
     print(f"  Requests:     {num_requests}")
     print(f"  Avg Latency:  {avg_latency:.2f} ms")
     print(f"  P50 Latency:  {p50:.2f} ms")
@@ -64,4 +64,4 @@ def benchmark_model(
     metrics.log_metric("p99_latency_ms", float(p99))
     metrics.log_metric("requests_per_second", float(requests_per_sec))
 
-    print(f"\nBenchmark completed successfully")
+    print("\nBenchmark completed successfully")

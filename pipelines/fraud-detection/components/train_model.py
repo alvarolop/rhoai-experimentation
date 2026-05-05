@@ -63,7 +63,7 @@ def train_fraud_model(
     recall = recall_score(y_test, y_pred)
     f1 = f1_score(y_test, y_pred)
 
-    print(f"\nOK Model Performance:")
+    print("\nOK Model Performance:")
     print(f"  - Accuracy:  {accuracy:.4f}")
     print(f"  - Precision: {precision:.4f}")
     print(f"  - Recall:    {recall:.4f}")

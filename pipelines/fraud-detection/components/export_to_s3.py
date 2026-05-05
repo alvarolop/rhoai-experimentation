@@ -31,7 +31,6 @@ def export_to_s3(
     import boto3
     from skl2onnx import to_onnx
     from skl2onnx.common.data_types import FloatTensorType
-    import numpy as np
     from datetime import datetime
 
     print("=" * 60)
@@ -50,7 +49,7 @@ def export_to_s3(
     print(f"  OK Loaded {metadata.get('model_type', 'model')}")
 
     # Convert to ONNX
-    print(f"\nOK Converting to ONNX format...")
+    print("\nOK Converting to ONNX format...")
     n_features = metadata.get("n_features", 8)
 
     # Create dummy input for ONNX conversion
@@ -58,7 +57,7 @@ def export_to_s3(
 
     try:
         onnx_model = to_onnx(sklearn_model, initial_types=initial_type, target_opset=15)
-        print(f"  OK Converted to ONNX (opset 15)")
+        print("  OK Converted to ONNX (opset 15)")
     except Exception as e:
         print(f"  ERROR ONNX conversion failed: {e}")
         raise
@@ -70,7 +69,7 @@ def export_to_s3(
     print(f"  OK Saved locally to {onnx_path}")
 
     # Upload to S3 - simplified path in bucket root with date suffix
-    print(f"\nOK Uploading to S3...")
+    print("\nOK Uploading to S3...")
     s3_key = f"{model_name}-{date_suffix}.onnx"
 
     try:
@@ -85,7 +84,7 @@ def export_to_s3(
         try:
             s3_client.head_bucket(Bucket=s3_bucket)
             print(f"  OK Bucket '{s3_bucket}' exists")
-        except:
+        except Exception:
             print(f"  OK Creating bucket '{s3_bucket}'...")
             s3_client.create_bucket(Bucket=s3_bucket)
 
@@ -104,7 +103,7 @@ def export_to_s3(
     except Exception as e:
         print(f"  ERROR S3 upload failed: {e}")
         s3_uri = f"local://{onnx_path}"
-        print(f"  WARNING  Using local path instead")
+        print("  WARNING  Using local path instead")
 
     # Generate MinIO UI URL
     # Extract cluster domain from s3_endpoint (e.g., minio.minio.svc.cluster.local:9000)

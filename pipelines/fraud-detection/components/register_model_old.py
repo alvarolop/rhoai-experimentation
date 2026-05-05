@@ -1,6 +1,4 @@
 from kfp.dsl import component, Input, Output, Model, Artifact
-import os
-import shutil
 
 
 @component(
@@ -14,7 +12,6 @@ def register_model(
     model_version: str,
     registry_output: Output[Artifact],
 ):
-    import requests
     import json
 
     model_metadata = {

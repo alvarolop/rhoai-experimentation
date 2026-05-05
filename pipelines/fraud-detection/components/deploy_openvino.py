@@ -72,7 +72,7 @@ def deploy_openvino(
         },
     }
 
-    print(f"\nOK Creating InferenceService...")
+    print("\nOK Creating InferenceService...")
 
     try:
         # Load in-cluster config
@@ -83,7 +83,7 @@ def deploy_openvino(
 
         # Check if InferenceService already exists
         try:
-            existing = api.get_namespaced_custom_object(
+            _ = api.get_namespaced_custom_object(
                 group="serving.kserve.io",
                 version="v1beta1",
                 namespace=namespace,
@@ -122,7 +122,7 @@ def deploy_openvino(
 
     except Exception as e:
         print(f"  ERROR Deployment failed: {e}")
-        print(f"  WARNING  Creating deployment manifest only...")
+        print("  WARNING  Creating deployment manifest only...")
         predictor_url = f"http://{isvc_name}-predictor.{namespace}.svc.cluster.local/v2/models/{isvc_name}/infer"
 
     # Save deployment info
@@ -140,7 +140,7 @@ def deploy_openvino(
     with open(deployment_output.path, "w") as f:
         json.dump(deployment_info, f, indent=2)
 
-    print(f"\nOK Deployment info saved")
+    print("\nOK Deployment info saved")
     print(f"OK Predictor URL: {predictor_url}")
     print("=" * 60)
 

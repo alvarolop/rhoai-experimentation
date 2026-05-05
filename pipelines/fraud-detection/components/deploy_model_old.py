@@ -27,7 +27,7 @@ def deploy_model(
 
     endpoint_url = f"http://{inference_service_name}-predictor.{namespace}.svc.cluster.local/v2/models/{inference_service_name}/infer"
 
-    print(f"Simulating deployment to KServe...")
+    print("Simulating deployment to KServe...")
     time.sleep(2)
 
     with open(endpoint_output.path, "w") as f:
@@ -42,5 +42,5 @@ def deploy_model(
             )
         )
 
-    print(f"Model deployed successfully")
+    print("Model deployed successfully")
     print(f"Inference endpoint: {endpoint_url}")

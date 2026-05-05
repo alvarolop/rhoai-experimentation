@@ -41,18 +41,18 @@ def configure_trustyai(
         print(f"\nOK Checking TrustyAIService '{trustyai_name}'...")
 
         try:
-            existing_service = api.get_namespaced_custom_object(
+            _ = api.get_namespaced_custom_object(
                 group="trustyai.opendatahub.io",
                 version="v1alpha1",
                 namespace=namespace,
                 plural="trustyaiservices",
                 name=trustyai_name,
             )
-            print(f"  OK TrustyAIService already exists")
+            print("  OK TrustyAIService already exists")
 
         except client.exceptions.ApiException as e:
             if e.status == 404:
-                print(f"  OK Creating TrustyAIService...")
+                print("  OK Creating TrustyAIService...")
 
                 # Create TrustyAIService
                 trustyai_service = {
@@ -80,7 +80,7 @@ def configure_trustyai(
                     plural="trustyaiservices",
                     body=trustyai_service,
                 )
-                print(f"  OK Created TrustyAIService")
+                print("  OK Created TrustyAIService")
             else:
                 raise
 
@@ -143,7 +143,7 @@ def configure_trustyai(
 
     except Exception as e:
         print(f"  ERROR TrustyAI configuration failed: {e}")
-        print(f"  WARNING  Model deployed without monitoring")
+        print("  WARNING  Model deployed without monitoring")
         return "failed"
 
     print("=" * 60)

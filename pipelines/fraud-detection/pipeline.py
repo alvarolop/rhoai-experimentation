@@ -82,7 +82,7 @@ def fraud_detection_pipeline(
     )
 
     # Step 5: Register model in Model Registry (with S3 location from export)
-    register_task = register_model_real(
+    _ = register_model_real(
         model_input=train_task.outputs["model_output"],
         model_metadata=train_task.outputs[
             "Output"
@@ -102,7 +102,7 @@ def fraud_detection_pipeline(
     )
 
     # Step 7: Configure TrustyAI monitoring
-    trustyai_task = configure_trustyai(
+    _ = configure_trustyai(
         deployment_info_input=deploy_task.outputs["deployment_output"],
         namespace=namespace,
         enable_metrics=enable_trustyai,

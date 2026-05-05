@@ -22,8 +22,6 @@ def register_model_real(
     """
     import requests
     import json
-    import sys
-    from datetime import datetime
 
     print("=" * 60)
     print("Registering Model in Model Registry")
@@ -72,7 +70,7 @@ def register_model_real(
             print(f"  OK Created RegisteredModel: {registered_model_id}")
         elif response.status_code == 409:
             # Already exists, get it
-            print(f"  OK RegisteredModel already exists, fetching...")
+            print("  OK RegisteredModel already exists, fetching...")
             response = requests.get(
                 f"{model_registry_url}/api/model_registry/v1alpha3/registered_models?name={model_name}",
                 timeout=10,
@@ -95,7 +93,7 @@ def register_model_real(
 
     except Exception as e:
         print(f"  ERROR Model Registry error: {e}")
-        print(f"  WARNING  Continuing with local registration...")
+        print("  WARNING  Continuing with local registration...")
         registered_model_id = f"local-{model_name}"
 
     # Create ModelVersion

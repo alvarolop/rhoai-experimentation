@@ -28,7 +28,7 @@ def validate_pipeline(
         # Just check if endpoint is reachable (MinIO or AWS S3)
         response = requests.get(f"http://{s3_endpoint}/minio/health/live", timeout=5)
         if response.status_code == 200:
-            print(f"  OK S3 endpoint reachable")
+            print("  OK S3 endpoint reachable")
         else:
             print(f"  WARNING  S3 endpoint returned {response.status_code}")
     except Exception as e:
@@ -43,7 +43,7 @@ def validate_pipeline(
             timeout=5,
         )
         if response.status_code == 200:
-            print(f"  OK Model Registry accessible")
+            print("  OK Model Registry accessible")
         else:
             print(f"  WARNING  Model Registry returned {response.status_code}")
     except Exception as e:
