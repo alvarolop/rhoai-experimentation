@@ -53,12 +53,14 @@ def fraud_detection_pipeline(
         model_registry_url=model_registry_url,
         namespace=namespace,
     )
+    validate_task.set_caching_options(False)
 
     # Step 2: Generate synthetic fraud data
     generate_task = generate_fraud_data(
         num_samples=num_samples, fraud_ratio=fraud_ratio
     )
     generate_task.after(validate_task)
+    generate_task.set_caching_options(False)
 
     # Step 3: Train fraud detection model
     train_task = train_fraud_model(
@@ -66,6 +68,7 @@ def fraud_detection_pipeline(
         test_size=test_size,
         n_estimators=n_estimators,
     )
+    train_task.set_caching_options(False)
 
     # Step 4: Export to ONNX and upload to S3 (before registering so we have S3 location)
     export_task = export_to_s3(
@@ -80,9 +83,10 @@ def fraud_detection_pipeline(
         model_name=model_name,
         model_version=model_version,
     )
+    export_task.set_caching_options(False)
 
     # Step 5: Register model in Model Registry (with S3 location from export)
-    _ = register_model_real(
+    register_task = register_model_real(
         model_input=train_task.outputs["model_output"],
         model_metadata=train_task.outputs[
             "Output"
@@ -92,6 +96,7 @@ def fraud_detection_pipeline(
         model_version=model_version,
         s3_info_input=export_task.outputs["s3_output"],  # S3 info artifact from export
     )
+    register_task.set_caching_options(False)
 
     # Step 6: Deploy with OpenVINO runtime
     deploy_task = deploy_openvino(
@@ -100,13 +105,15 @@ def fraud_detection_pipeline(
         model_version=model_version,
         namespace=namespace,
     )
+    deploy_task.set_caching_options(False)
 
     # Step 7: Configure TrustyAI monitoring
-    _ = configure_trustyai(
+    trustyai_task = configure_trustyai(
         deployment_info_input=deploy_task.outputs["deployment_output"],
         namespace=namespace,
         enable_metrics=enable_trustyai,
     )
+    trustyai_task.set_caching_options(False)
 
 
 if __name__ == "__main__":
