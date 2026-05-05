@@ -1,0 +1,56 @@
+---
+{{- if .Values.tekton.enabled }}
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: run-kfp-pipeline
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "rhoai-pipelines-demo.labels" . | nindent 4 }}
+  annotations:
+    description: |
+      Execution pipeline for KFP pipelines.
+      Creates a run from an existing KFP pipeline definition.
+      Does NOT lint or upload - only executes.
+spec:
+  params:
+    - name: pipeline-name
+      type: string
+      default: {{ .Values.kfpPipeline.name }}
+      description: Name of the existing KFP pipeline to run
+    - name: experiment-name
+      type: string
+      default: {{ .Values.kfpPipeline.experimentName | default "fraud-detection-experiments" }}
+      description: Experiment name to organize runs
+    - name: run-name
+      type: string
+      default: ""
+      description: Optional run name (auto-generated if empty)
+    - name: parameters
+      type: string
+      default: {{ .Values.kfpPipeline.parameters | default "{}" | quote }}
+      description: JSON string of pipeline parameters
+    - name: wait-for-completion
+      type: string
+      default: "{{ .Values.kfpPipeline.waitForCompletion }}"
+    - name: timeout
+      type: string
+      default: "{{ .Values.kfpPipeline.timeout }}"
+  tasks:
+    - name: run-pipeline
+      taskRef:
+        name: run-kfp-pipeline
+      params:
+        - name: pipeline-name
+          value: $(params.pipeline-name)
+        - name: experiment-name
+          value: $(params.experiment-name)
+        - name: run-name
+          value: $(params.run-name)
+        - name: parameters
+          value: $(params.parameters)
+        - name: wait-for-completion
+          value: $(params.wait-for-completion)
+        - name: timeout
+          value: $(params.timeout)
+{{- end }}

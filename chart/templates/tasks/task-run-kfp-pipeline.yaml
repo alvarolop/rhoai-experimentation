@@ -1,0 +1,185 @@
+---
+{{- if .Values.tekton.enabled }}
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: run-kfp-pipeline
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "rhoai-pipelines-demo.labels" . | nindent 4 }}
+  annotations:
+    description: |
+      Create a run from an existing KFP pipeline definition.
+      This task takes an existing pipeline (uploaded via CI/CD) and creates
+      a new run with optional parameters.
+spec:
+  params:
+    - name: pipeline-name
+      type: string
+      description: Name of the existing pipeline to run
+    - name: experiment-name
+      type: string
+      description: Name of the experiment to organize runs
+      default: "default"
+    - name: run-name
+      type: string
+      description: Name for this specific run (optional, auto-generated if empty)
+      default: ""
+    - name: parameters
+      type: string
+      description: JSON string of pipeline parameters (e.g. '{"num_samples":10000}')
+      default: "{}"
+    - name: wait-for-completion
+      type: string
+      description: Whether to wait for pipeline completion (true/false)
+      default: "true"
+    - name: timeout
+      type: string
+      description: Timeout in seconds for pipeline execution
+      default: "7200"
+  results:
+    - name: run-id
+      description: KFP Run ID of the executed pipeline
+    - name: status
+      description: Pipeline execution status (succeeded/failed/running)
+  steps:
+    - name: create-run
+      # Custom builder image with pre-installed KFP SDK
+      image: {{ .Values.tekton.image }}
+      script: |
+        #!/bin/bash
+        set -e
+
+        echo "🏃 Creating KFP Run from existing pipeline"
+        echo "   Pipeline: $(params.pipeline-name)"
+        echo "   Experiment: $(params.experiment-name)"
+        echo "   Wait for completion: $(params.wait-for-completion)"
+        echo "   Timeout: $(params.timeout)s"
+
+        cat << EOF | python3
+        import kfp
+        import sys
+        import json
+        import uuid
+
+        # Read namespace from ServiceAccount
+        with open('/var/run/secrets/kubernetes.io/serviceaccount/namespace') as f:
+            namespace = f.read().strip()
+
+        # DSP API endpoint (RHOAI 3.3 uses HTTPS on 8443)
+        dsp_host = f'https://ds-pipeline-dspa.{namespace}.svc:8443'
+
+        # ServiceAccount token authentication
+        with open('/var/run/secrets/kubernetes.io/serviceaccount/token') as f:
+            token = f.read().strip()
+
+        ssl_ca = '/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt'
+
+        print(f'Connecting to DSP: {dsp_host}')
+
+        # Create KFP client
+        client = kfp.Client(host=dsp_host, existing_token=token, ssl_ca_cert=ssl_ca)
+
+        # Find the pipeline by name
+        pipeline_name = "$(params.pipeline-name)"
+        print(f'Looking for pipeline: {pipeline_name}')
+
+        pipelines = client.list_pipelines(page_size=100)
+        pipeline = None
+
+        if hasattr(pipelines, 'pipelines') and pipelines.pipelines:
+            for p in pipelines.pipelines:
+                if p.display_name == pipeline_name or p.pipeline_id == pipeline_name:
+                    pipeline = p
+                    break
+
+        if not pipeline:
+            print(f'ERROR: Pipeline not found: {pipeline_name}')
+            print('Available pipelines:')
+            if hasattr(pipelines, 'pipelines') and pipelines.pipelines:
+                for p in pipelines.pipelines:
+                    print(f'  - {p.display_name} (ID: {p.pipeline_id})')
+            sys.exit(1)
+
+        pipeline_id = pipeline.pipeline_id
+        print(f'Found pipeline ID: {pipeline_id}')
+
+        # Parse parameters
+        params_str = "$(params.parameters)"
+        params_dict = json.loads(params_str) if params_str and params_str != "{}" else {}
+        print(f'Parameters: {params_dict}')
+
+        # Generate run name if not provided
+        run_name = "$(params.run-name)"
+        if not run_name:
+            run_name = f"{pipeline_name}-run-{uuid.uuid4().hex[:8]}"
+        print(f'Run name: {run_name}')
+
+        # Create experiment if needed
+        experiment_name = "$(params.experiment-name)"
+        try:
+            experiment = client.create_experiment(name=experiment_name, namespace=namespace)
+            experiment_id = experiment.experiment_id
+            print(f'Created/Found experiment: {experiment_name} (ID: {experiment_id})')
+        except Exception as e:
+            # Experiment might already exist
+            experiments = client.list_experiments(page_size=100)
+            experiment_id = None
+            if hasattr(experiments, 'experiments') and experiments.experiments:
+                for exp in experiments.experiments:
+                    if exp.display_name == experiment_name:
+                        experiment_id = exp.experiment_id
+                        break
+            if not experiment_id:
+                print(f'WARNING: Could not create/find experiment: {e}')
+                experiment_id = None
+
+        # Create run from pipeline
+        print(f'🚀 Starting pipeline run')
+        run = client.run_pipeline(
+            experiment_id=experiment_id,
+            job_name=run_name,
+            pipeline_id=pipeline_id,
+            params=params_dict
+        )
+
+        run_id = run.run_id
+        print(f'✅ Run created: {run_id}')
+
+        with open('$(results.run-id.path)', 'w') as f:
+            f.write(run_id)
+
+        # Wait if requested
+        if "$(params.wait-for-completion)" == "true":
+            print('⏳ Waiting for completion...')
+            try:
+                client.wait_for_run_completion(
+                    run_id=run_id,
+                    timeout=int("$(params.timeout)"),
+                    sleep_duration=5
+                )
+                run_details = client.get_run(run_id)
+                status = run_details.state if hasattr(run_details, 'state') else 'Unknown'
+                print(f'Status: {status}')
+
+                with open('$(results.status.path)', 'w') as f:
+                    f.write(str(status))
+
+                if status != 'SUCCEEDED' and str(status) != 'State.SUCCEEDED':
+                    print('❌ Pipeline execution did not succeed')
+                    sys.exit(1)
+
+                print('✅ Pipeline completed successfully!')
+            except Exception as e:
+                print(f'❌ Error waiting for completion: {e}')
+                with open('$(results.status.path)', 'w') as f:
+                    f.write('Failed')
+                sys.exit(1)
+        else:
+            with open('$(results.status.path)', 'w') as f:
+                f.write('Running')
+
+        EOF
+
+        echo "✅ Task completed"
+{{- end }}

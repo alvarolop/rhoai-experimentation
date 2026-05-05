@@ -1,0 +1,104 @@
+---
+{{- if .Values.tekton.enabled }}
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: ci-kfp-pipeline
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "rhoai-pipelines-demo.labels" . | nindent 4 }}
+  annotations:
+    description: |
+      CI/CD pipeline for KFP pipeline code.
+      Triggered when pipeline code changes (via git webhook or manual).
+      Lints, compiles, and uploads the pipeline definition (NOT a run).
+spec:
+  params:
+    - name: git-url
+      type: string
+      default: {{ .Values.git.url }}
+    - name: git-revision
+      type: string
+      default: {{ .Values.git.revision }}
+    - name: pipeline-path
+      type: string
+      default: {{ .Values.git.pipelinePath }}
+    - name: pipeline-name
+      type: string
+      default: {{ .Values.kfpPipeline.name }}
+    - name: pipeline-file
+      type: string
+      default: "pipeline.py"
+    - name: pipeline-description
+      type: string
+      default: "Fraud Detection ML Pipeline - CI/CD Upload"
+  workspaces:
+    - name: shared-workspace
+    {{- if .Values.git.auth.enabled }}
+    {{- if eq .Values.git.auth.type "ssh" }}
+    - name: git-ssh-credentials
+      optional: false
+    {{- else if eq .Values.git.auth.type "basic" }}
+    - name: git-basic-credentials
+      optional: false
+    {{- end }}
+    {{- end }}
+  tasks:
+    - name: git-clone
+      taskRef:
+        # Use Red Hat provided git-clone task from openshift-pipelines namespace
+        # Requires OpenShift Pipelines 1.15+
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
+      params:
+        - name: URL
+          value: $(params.git-url)
+        - name: REVISION
+          value: $(params.git-revision)
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+        {{- if .Values.git.auth.enabled }}
+        {{- if eq .Values.git.auth.type "ssh" }}
+        - name: ssh-directory
+          workspace: git-ssh-credentials
+        {{- else if eq .Values.git.auth.type "basic" }}
+        - name: basic-auth
+          workspace: git-basic-credentials
+        {{- end }}
+        {{- end }}
+
+    - name: lint
+      taskRef:
+        name: lint-python
+      runAfter:
+        - git-clone
+      params:
+        - name: path
+          value: $(params.pipeline-path)
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+
+    - name: upload-pipeline
+      taskRef:
+        name: upload-kfp-pipeline
+      runAfter:
+        - lint
+      params:
+        - name: pipeline-file
+          value: $(params.pipeline-path)/$(params.pipeline-file)
+        - name: pipeline-name
+          value: $(params.pipeline-name)
+        - name: pipeline-description
+          value: $(params.pipeline-description)
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+{{- end }}

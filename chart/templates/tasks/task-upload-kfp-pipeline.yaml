@@ -1,0 +1,149 @@
+---
+{{- if .Values.tekton.enabled }}
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: upload-kfp-pipeline
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "rhoai-pipelines-demo.labels" . | nindent 4 }}
+  annotations:
+    description: |
+      Compile and upload a Kubeflow Pipeline definition to DSP server.
+      This task compiles the pipeline to YAML and uploads it as a pipeline
+      (not a run), making it available in the UI for manual or automated execution.
+spec:
+  params:
+    - name: pipeline-file
+      type: string
+      description: Path to the pipeline Python file (e.g., pipelines/fraud-detection/pipeline.py)
+      default: "pipeline.py"
+    - name: pipeline-name
+      type: string
+      description: Name for the pipeline
+    - name: pipeline-description
+      type: string
+      description: Description for the pipeline
+      default: "Pipeline uploaded via Tekton CI/CD"
+  workspaces:
+    - name: output
+      description: Workspace containing the pipeline source code
+  results:
+    - name: pipeline-id
+      description: KFP Pipeline ID
+    - name: pipeline-version-id
+      description: KFP Pipeline Version ID
+  steps:
+    - name: upload-pipeline
+      # Custom builder image with pre-installed KFP SDK
+      image: {{ .Values.tekton.image }}
+      workingDir: $(workspaces.output.path)
+      script: |
+        #!/bin/bash
+        set -e
+
+        WORKSPACE_PATH="$(workspaces.output.path)"
+        PIPELINE_FILE="${WORKSPACE_PATH}/$(params.pipeline-file)"
+        PIPELINE_DIR=$(dirname "${PIPELINE_FILE}")
+        PIPELINE_YAML="/tmp/$(params.pipeline-name).yaml"
+
+        echo "📦 Uploading KFP Pipeline Definition: $(params.pipeline-name)"
+        echo "   Pipeline file: $(params.pipeline-file)"
+        echo "   Absolute path: ${PIPELINE_FILE}"
+
+        # Add pipeline directory to PYTHONPATH for component imports
+        export PYTHONPATH="${PIPELINE_DIR}:${PYTHONPATH}"
+
+        cat << EOF | python3
+        import kfp
+        from kfp import compiler
+        import sys
+        import os
+        import importlib.util
+
+        # Read namespace from ServiceAccount
+        with open('/var/run/secrets/kubernetes.io/serviceaccount/namespace') as f:
+            namespace = f.read().strip()
+
+        # DSP API endpoint (RHOAI 3.3 uses HTTPS on 8443)
+        dsp_host = f'https://ds-pipeline-dspa.{namespace}.svc:8443'
+
+        # ServiceAccount token authentication
+        with open('/var/run/secrets/kubernetes.io/serviceaccount/token') as f:
+            token = f.read().strip()
+
+        ssl_ca = '/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt'
+
+        print(f'Connecting to DSP: {dsp_host}')
+
+        # Create KFP client
+        client = kfp.Client(host=dsp_host, existing_token=token, ssl_ca_cert=ssl_ca)
+
+        # Import pipeline module using absolute path
+        pipeline_file = "${PIPELINE_FILE}"
+        print(f'Loading pipeline from: {pipeline_file}')
+
+        if not os.path.exists(pipeline_file):
+            print(f'ERROR: Pipeline file not found: {pipeline_file}')
+            sys.exit(1)
+
+        spec = importlib.util.spec_from_file_location("pipeline", pipeline_file)
+        if spec is None or spec.loader is None:
+            print(f'ERROR: Failed to load pipeline module from {pipeline_file}')
+            sys.exit(1)
+
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        # Find pipeline function (decorated with @dsl.pipeline)
+        pipeline_func = None
+        for name in dir(module):
+            if name.startswith('_'):
+                continue
+            obj = getattr(module, name)
+
+            # Check if it's a pipeline function (GraphComponent)
+            if (callable(obj) and
+                hasattr(obj, '__module__') and
+                obj.__module__ == 'kfp.dsl.graph_component'):
+                pipeline_func = obj
+                print(f'Found pipeline function: {name}')
+                break
+
+        if not pipeline_func:
+            print('ERROR: No pipeline function found')
+            sys.exit(1)
+
+        # Compile pipeline to YAML
+        pipeline_yaml = "${PIPELINE_YAML}"
+        print(f'Compiling pipeline to: {pipeline_yaml}')
+        compiler.Compiler().compile(
+            pipeline_func=pipeline_func,
+            package_path=pipeline_yaml
+        )
+        print('✅ Pipeline compiled successfully')
+
+        # Upload pipeline to DSP
+        print(f'📤 Uploading pipeline: $(params.pipeline-name)')
+        pipeline_upload = client.upload_pipeline(
+            pipeline_package_path=pipeline_yaml,
+            pipeline_name="$(params.pipeline-name)",
+            description="$(params.pipeline-description)"
+        )
+
+        pipeline_id = pipeline_upload.pipeline_id
+        pipeline_version_id = pipeline_upload.default_version.pipeline_version_id if hasattr(pipeline_upload, 'default_version') and pipeline_upload.default_version else 'unknown'
+
+        print(f'✅ Pipeline uploaded successfully')
+        print(f'   Pipeline ID: {pipeline_id}')
+        print(f'   Version ID: {pipeline_version_id}')
+
+        with open('$(results.pipeline-id.path)', 'w') as f:
+            f.write(pipeline_id)
+        with open('$(results.pipeline-version-id.path)', 'w') as f:
+            f.write(str(pipeline_version_id))
+
+        EOF
+
+        echo "✅ Task completed"
+{{- end }}

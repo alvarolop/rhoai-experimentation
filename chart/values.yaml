@@ -34,6 +34,8 @@ git:
 
 kfpPipeline:
   name: fraud-detection-pipeline
+  experimentName: fraud-detection-experiments  # Experiment to organize runs
+  parameters: "{}"  # JSON string of pipeline parameters (e.g. '{"num_samples":10000}')
   waitForCompletion: true  # Wait for pipeline execution to finish
   timeout: 3600  # Timeout in seconds (1 hour)
 

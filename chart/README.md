@@ -4,13 +4,35 @@ Helm chart for deploying Red Hat OpenShift AI Data Science Pipelines demo with T
 
 ## Overview
 
-This chart deploys:
+This chart deploys two separate Tekton pipelines for managing KFP pipelines:
 
-- **Tekton Pipeline** - CI/CD workflow for Kubeflow pipeline deployment
-- **Tekton Tasks** - Lint, compile, upload, and run tasks
-- **PersistentVolumeClaim** - Workspace storage for pipeline execution
+### 1. CI/CD Pipeline (`ci-kfp-pipeline`)
+
+**Triggered by**: Code changes (git webhook or manual)  
+**Purpose**: Validate and upload pipeline definitions
+
+- Clones git repository
+- Lints Python code (Black, flake8, pylint)
+- Compiles KFP pipeline to YAML
+- **Uploads pipeline definition** (NOT a run)
+- Makes pipeline available in DSP UI
+
+### 2. Execution Pipeline (`run-kfp-pipeline`)
+
+**Triggered by**: PipelineRun creation (manual, schedule, or trigger)  
+**Purpose**: Execute existing pipeline definitions
+
+- Takes existing pipeline by name
+- Creates a new **run** from that pipeline
+- Optionally waits for completion
+- No git clone, no linting
+
+### Additional Resources
+
+- **Tekton Tasks** - Reusable tasks (lint, upload, run)
+- **PersistentVolumeClaim** - Workspace storage
 - **S3 Credentials Secret** - For artifact storage
-- **Optional Triggers** - Webhook-based pipeline automation
+- **Optional Triggers** - Webhook-based automation
 
 ## Prerequisites
 
@@ -75,6 +97,10 @@ helm install fraud-detection . \
 | `git.auth.password` | Password or token (basic auth) | `""` |
 | **Kubeflow Pipeline** | | |
 | `kfpPipeline.name` | Pipeline name | `fraud-detection-pipeline` |
+| `kfpPipeline.experimentName` | Experiment to organize runs | `fraud-detection-experiments` |
+| `kfpPipeline.parameters` | JSON pipeline parameters | `"{}"` |
+| `kfpPipeline.waitForCompletion` | Wait for run completion | `true` |
+| `kfpPipeline.timeout` | Timeout in seconds | `3600` |
 | **Tekton** | | |
 | `tekton.enabled` | Enable Tekton resources | `true` |
 | `tekton.serviceAccount` | ServiceAccount for pipelines | `pipeline` |
@@ -150,31 +176,127 @@ helm install fraud-detection . \
   --set s3.secretAccessKey=$AWS_SECRET_ACCESS_KEY
 ```
 
-### Trigger Pipeline
+### Workflow
 
-**Manual:**
+#### Step 1: Upload Pipeline Definition (CI/CD)
+
+**When to use**: When pipeline code changes (new features, bug fixes)
+
+**Trigger manually:**
 
 ```bash
-oc create -f ../tekton/example-run.yaml
+oc create -f - <<EOF
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: ci-kfp-pipeline-run-
+  namespace: rhoai-playground
+spec:
+  pipelineRef:
+    name: ci-kfp-pipeline
+  workspaces:
+    - name: shared-workspace
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+EOF
 ```
 
-**Via Webhook:**
+**Or via Git webhook** (if triggers enabled):
+- Push to your git repository
+- Webhook triggers `ci-kfp-pipeline` automatically
+- Pipeline is linted, compiled, and uploaded to DSP
 
-Get webhook URL:
+**Result**: Pipeline definition available in RHOAI UI
+
+#### Step 2: Execute Pipeline (Create Runs)
+
+**When to use**: When you want to train a model, process data, etc.
+
+**Trigger manually:**
+
 ```bash
-oc get route kfp-webhook-listener -o jsonpath='{.spec.host}'
+oc create -f - <<EOF
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: run-kfp-pipeline-
+  namespace: rhoai-playground
+spec:
+  pipelineRef:
+    name: run-kfp-pipeline
+  params:
+    - name: pipeline-name
+      value: fraud-detection-pipeline
+    - name: experiment-name
+      value: fraud-detection-experiments
+    - name: parameters
+      value: '{"num_samples": 10000, "n_estimators": 100}'
+    - name: wait-for-completion
+      value: "true"
+EOF
 ```
 
-Configure in GitHub → Settings → Webhooks.
+**Via Schedule** (CronJob):
 
-### Monitor Pipeline
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: fraud-detection-daily
+spec:
+  schedule: "0 2 * * *"  # 2 AM daily
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: pipeline
+          containers:
+          - name: create-run
+            image: quay.io/openshift/origin-cli:latest
+            command:
+            - /bin/bash
+            - -c
+            - |
+              oc create -f - <<EOF
+              apiVersion: tekton.dev/v1
+              kind: PipelineRun
+              metadata:
+                generateName: run-kfp-pipeline-
+              spec:
+                pipelineRef:
+                  name: run-kfp-pipeline
+                params:
+                  - name: pipeline-name
+                    value: fraud-detection-pipeline
+              EOF
+          restartPolicy: Never
+```
+
+### Monitor Pipelines
+
+**Tekton (CI/CD and execution):**
 
 ```bash
-# Watch Tekton pipeline
-tkn pipelinerun logs -f -n <namespace>
+# List all pipeline runs
+tkn pipelinerun list -n rhoai-playground
 
-# Check Kubeflow pipeline in RHOAI UI
-# Navigate to Data Science Pipelines → Runs
+# Watch specific run
+tkn pipelinerun logs ci-kfp-pipeline-run-xxxxx -f -n rhoai-playground
+tkn pipelinerun logs run-kfp-pipeline-xxxxx -f -n rhoai-playground
+```
+
+**KFP (ML pipeline execution):**
+
+```bash
+# Check in RHOAI UI
+# Navigate to: Data Science Pipelines → Pipelines (see definitions)
+# Navigate to: Data Science Pipelines → Runs (see executions)
+```
 ```
 
 ## Upgrade
