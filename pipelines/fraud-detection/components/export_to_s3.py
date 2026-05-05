@@ -115,7 +115,9 @@ def export_to_s3(
         # This is a simplified pattern - adjust based on your cluster's route naming
         minio_ui_url = f"https://minio-ui-minio.apps.ocp.sandbox3872.opentlc.com/buckets/{s3_bucket}/admin/summary"
     else:
-        minio_ui_url = f"https://{s3_endpoint.split(':')[0]}/buckets/{s3_bucket}/admin/summary"
+        minio_ui_url = (
+            f"https://{s3_endpoint.split(':')[0]}/buckets/{s3_bucket}/admin/summary"
+        )
 
     print(f"  OK MinIO UI: {minio_ui_url}")
 
