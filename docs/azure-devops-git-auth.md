@@ -130,7 +130,59 @@ Permissions needed:
 
 **Important**: Copy the token immediately - it won't be shown again.
 
-#### 2. Create Kubernetes Secret with Basic Auth
+#### 2. URL Encoding for Special Characters
+
+If your username or password contains special characters, they must be URL-encoded in the `.git-credentials` file.
+
+**Common special characters in usernames:**
+
+| Character | URL Encoded | Example Use Case |
+|-----------|-------------|------------------|
+| `@` | `%40` | Email as username: `user@company.com` → `user%40company.com` |
+| `\` | `%5C` | Domain username: `DOMAIN\user` → `DOMAIN%5Cuser` |
+| `:` | `%3A` | Rare but possible in usernames |
+| `/` | `%2F` | Forward slash |
+| `?` | `%3F` | Question mark |
+| `#` | `%23` | Hash/pound |
+| `%` | `%25` | Percent itself |
+
+**Common special characters in passwords/tokens:**
+
+Same encoding applies to PAT tokens if they contain special characters (rare but possible).
+
+**Examples:**
+
+```bash
+# Username with @ symbol (email)
+# user@company.com with token abc123
+https://user%40company.com:abc123@azuredevops.yourcompany.com
+
+# Domain username with backslash
+# DOMAIN\username with token abc123
+https://DOMAIN%5Cusername:abc123@azuredevops.yourcompany.com
+
+# Username with both @ and \
+# DOMAIN\user@company.com with token abc123
+https://DOMAIN%5Cuser%40company.com:abc123@azuredevops.yourcompany.com
+
+# Token with special characters (if needed)
+# username with token abc:123/xyz
+https://username:abc%3A123%2Fxyz@azuredevops.yourcompany.com
+```
+
+**Quick URL encoding script:**
+
+```bash
+# Encode username
+echo -n "DOMAIN\username" | jq -sRr @uri
+# Output: DOMAIN%5Cusername
+
+# Encode email
+echo -n "user@company.com" | jq -sRr @uri
+# Output: user%40company.com
+```
+
+#### 3. Create Kubernetes Secret with Basic Auth
 
 The secret must contain both `.git-credentials` and `.gitconfig` files.
 
@@ -138,6 +190,8 @@ The secret must contain both `.git-credentials` and `.gitconfig` files.
 
 ```bash
 # Create .git-credentials file
+# NOTE: If username contains special characters (like @ or \), use URL encoding (see section 2)
+# Example: DOMAIN\user becomes DOMAIN%5Cuser
 cat > /tmp/.git-credentials <<EOF
 https://username:TOKEN@azuredevops.yourcompany.com
 EOF
@@ -164,6 +218,8 @@ rm /tmp/.git-credentials /tmp/.gitconfig
 
 ```bash
 # Base64 encode credentials
+# NOTE: If username contains special characters (like @ or \), use URL encoding (see section 2)
+# Example: DOMAIN\user becomes DOMAIN%5Cuser
 GIT_CREDS=$(cat <<EOF | base64 -w 0
 https://username:TOKEN@azuredevops.yourcompany.com
 EOF
@@ -195,7 +251,7 @@ oc apply -f azure-devops-basic-secret.yaml
 rm azure-devops-basic-secret.yaml
 ```
 
-#### 3. Configure Git Clone Task for Basic Auth
+#### 4. Configure Git Clone Task for Basic Auth
 
 ```yaml
 apiVersion: tekton.dev/v1
@@ -222,7 +278,7 @@ spec:
       value: "https://azuredevops.yourcompany.com/YourOrg/YourProject/_git/repo"
 ```
 
-#### 4. Update Pipeline for Basic Auth
+#### 5. Update Pipeline for Basic Auth
 
 ```yaml
 apiVersion: tekton.dev/v1
@@ -298,6 +354,8 @@ The keys MUST be exactly `.git-credentials` and `.gitconfig` (including the dot 
 oc delete secret azure-devops-basic
 
 # Create with exact key names
+# NOTE: If username contains special characters (like @ or \), use URL encoding
+# Example: DOMAIN\user becomes DOMAIN%5Cuser (see Method 2, section 2)
 oc create secret generic azure-devops-basic \
   --from-literal='.git-credentials'='https://username:TOKEN@azuredevops.yourcompany.com' \
   --from-literal='.gitconfig'='[credential]
