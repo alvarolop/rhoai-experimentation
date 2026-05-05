@@ -75,12 +75,7 @@ See [container-image-tekton/README.md](container-image-tekton/README.md) for det
 ### 2. Install the Helm Chart
 
 ```bash
-helm install fraud-detection chart/ \
-  --set tekton.image=quay.io/alopezme/rhoai-kfp-builder:latest \
-  --set s3.accessKeyId=<your-access-key> \
-  --set s3.secretAccessKey=<your-secret-key> \
-  --set s3.endpoint=<minio-endpoint> \
-  --set namespace=<your-namespace>
+helm template chart -f chart/values.yaml | oc apply -f -
 ```
 
 This deploys:

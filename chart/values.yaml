@@ -9,10 +9,10 @@ modelRegistry:
   url: http://model-registry-service.rhoai-playground.svc.cluster.local:8080
 
 s3:
-  endpoint: minio-service.minio.svc.cluster.local:9000
+  endpoint: minio.minio.svc.cluster.local:9000
   bucket: pipeline-artifacts
-  accessKeyId: ""
-  secretAccessKey: ""
+  accessKeyId: "minio"
+  secretAccessKey: "minio123"
 
 storage:
   pvcSize: 10Gi
